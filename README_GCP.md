@@ -1,7 +1,7 @@
 # Lab RestFUL - Google Cloud Platform
 
 ## 1. Setup Iniziale
-1. <u>**Controlla quale profilo hai attivo su vsCode**<u>
+1. **Controlla quale profilo hai attivo su vsCode**
 2. **Crea un ambiente virtuale:**
     ```bash
     python3 -m venv .venv
@@ -60,11 +60,7 @@
     ```
 9.  **Creiamo l'applicazione:**
     ```bash
-    gcloud services enable appengine.googleapis.com \
-                        cloudbuild.googleapis.com \
-                        firestore.googleapis.com \
-                        pubsub.googleapis.com
-    
+    gcloud services enable appengine.googleapis.com cloudbuild.googleapis.com firestore.googleapis.com pubsub.googleapis.com
     gcloud app create --project=${PROJECT_ID}
     ```
 ---
@@ -167,4 +163,95 @@
         db.populate_from_json('db.json',collection_name)
     ```
 ---        
+# 3. RESTful API
+Dalla lettura del file **`dettagli_api.yaml`** fornito, estraiamo:
+- Le **risorse (endpoints)** disponibili.
+- I **metodi HTTP** da implementare per ciascuna risorsa e i relativi **codici di risposta**.
+- La **struttura dei dati di input e output**, definita nella sezione **definitions**, ad esempio tramite il riferimento.**`$ref: "#/definitions/Prenotazione"`**, che descrive i campi obbligatori e il loro formato.
+- I **parametri richiesti** (nel path, query, header o body) e i relativi tipi.
+
+## 3.1. Steps
+1. **File `api.py`:**
+   
+    ```python
+    from flask import Flask, request
+    from flask_restful import Resource, Api
+    from file_firestone import *
+    from flask_cors import CORS
+    import re
+
+    app = Flask(__name__)
+    CORS(app)
+    api=Api(app)
+    base_path='/api/v1'
+
+    database_firestone = Classe_firestore() #DA MODIFICARE 
+
+    class FirstResource(Resource):
+        
+        # Per ottenere una risorsa
+        def get(self, colorName): 
+            #color = colors_dao.get_method() #questo intercetta le informazioni dentro il json della richiesta
+            return None,[200,400]
+            
+        # Crea una nuova risorsa
+        def post(self, colorname): 
+            request_info = request.json
+            #PARAM = request_info.get("PARAM")
+            return None,[200,400]
+            
+        # Aggiorna una risorsa specifica 
+        def put(self, colorname): 
+            request_info =request.json
+            #PARAM = request_info.get("PARAM")
+            return None,[200,400]
+            
+            
+    #Per ciascuna classe eseguiamo il collegamento con il path corretto all'esterno della classe indicando il nome del parametro (se presente nel path).
+    api.add_resource(FirstResource, f'{base_path}/colors/<string:colorName>')
+
+
+    #Ecco un esempio in cui il path possiede solamente un metodo e non è presente alcun parametro:
+    class SecondResource(Resource):
+        def get(self):
+            return colors_dao.get_colors(), 200
+            
+    api.add_resource(ColorList, f'{base_path}/colors')
+
+    #Per fare debug in locale
+    """
+    if __name__=='__main__':
+        app.run(host="localhost", port=8080, debug=True)
+    """
+    ```
+    **N.B.** Per ogni path definito nel file yaml definisco una classe.
+2. **File `api.yaml`:**
+    ```yaml
+    runtime: python313
+    service: default
+    entrypoint: gunicorn api:app
+    instance_class: F1
+    automatic_scaling:
+    max_instances: 1
+
+    handlers:
+    - url: /static
+    static_dir: static
+    - url: /.*
+    secure: always
+    script: auto
+    ```
+    **N.B.** `gunicorn api:app` → avvia Gunicorn usando l’oggetto `app` che si trova nel file `api.py`.
     
+    **N.B.** Se è il **primo file `.yaml`** che crei per il progetto, devi specificare `service: default`. Se invece stai creando un secondo **servizio** (ad esempio per le API), puoi specificare `service: api`.
+3. **Debug:** per testare e fare debug dell’API si può usare [SwaggerEditor](https://editor.swagger.io/). È sufficiente **copiare il file OpenAPI (YAML) fornito dal professore** e incollarlo nell’editor per visualizzare la documentazione e testare gli endpoint.
+    - **In locale** → usare **`HTTP`** invece di `HTTPS` e impostare `host: "localhost:8080”`.
+    - **In cloud** → impostare `host:"api-dot-nomeprogetto.appspot.com"`, `api-dot-` va usato solo se il servizio non è quello di default.
+4. **Deploy:**
+    
+    ```bash
+    gcloud app deploy api.yaml
+    ```
+---
+
+$\color{red}{\text{Questo è testo rosso puro}}$
