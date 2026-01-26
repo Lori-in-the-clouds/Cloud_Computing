@@ -1,7 +1,7 @@
 # Lab RestFUL - Google Cloud Platform
 
 ## 1. Setup Iniziale
-1. **Controlla quale profilo hai attivo su vsCode**
+1. <u>**Controlla quale profilo hai attivo su vsCode**</u>
 2. **Crea un ambiente virtuale:**
     ```bash
     python3 -m venv .venv
@@ -74,7 +74,7 @@
     gcloud iam service-accounts keys create credentials.json --iam-account ${NAME}@${PROJECT_ID}.iam.gserviceaccount.com 
     export GOOGLE_APPLICATION_CREDENTIALS="$(pwd)/credentials.json"
     ```
-    N.B. Il nome `NAME` deve essere senza trattini.
+    **$\color{red}{\text{N.B.}}$** Il nome `NAME` deve essere senza trattini.
 2. **Creiamo il file `db.json`:**
     ```json
     [
@@ -224,7 +224,7 @@ Dalla lettura del file **`dettagli_api.yaml`** fornito, estraiamo:
         app.run(host="localhost", port=8080, debug=True)
     """
     ```
-    **N.B.** Per ogni path definito nel file yaml definisco una classe.
+    **$\color{red}{\text{N.B.}}$** Per ogni path definito nel file yaml definisco una classe.
 2. **File `api.yaml`:**
     ```yaml
     runtime: python313
@@ -241,9 +241,9 @@ Dalla lettura del file **`dettagli_api.yaml`** fornito, estraiamo:
     secure: always
     script: auto
     ```
-    **N.B.** `gunicorn api:app` → avvia Gunicorn usando l’oggetto `app` che si trova nel file `api.py`.
+    **$\color{red}{\text{N.B.}}$** `gunicorn api:app` → avvia Gunicorn usando l’oggetto `app` che si trova nel file `api.py`.
     
-    **N.B.** Se è il **primo file `.yaml`** che crei per il progetto, devi specificare `service: default`. Se invece stai creando un secondo **servizio** (ad esempio per le API), puoi specificare `service: api`.
+   **$\color{green}{\text{N.B.}}$** Se è il **primo file `.yaml`** che crei per il progetto, devi specificare `service: default`. Se invece stai creando un secondo **servizio** (ad esempio per le API), puoi specificare `service: api`.
 3. **Debug:** per testare e fare debug dell’API si può usare [SwaggerEditor](https://editor.swagger.io/). È sufficiente **copiare il file OpenAPI (YAML) fornito dal professore** e incollarlo nell’editor per visualizzare la documentazione e testare gli endpoint.
     - **In locale** → usare **`HTTP`** invece di `HTTPS` e impostare `host: "localhost:8080”`.
     - **In cloud** → impostare `host:"api-dot-nomeprogetto.appspot.com"`, `api-dot-` va usato solo se il servizio non è quello di default.
@@ -254,4 +254,3 @@ Dalla lettura del file **`dettagli_api.yaml`** fornito, estraiamo:
     ```
 ---
 
-$\color{red}{\text{Questo è testo rosso puro}}$
