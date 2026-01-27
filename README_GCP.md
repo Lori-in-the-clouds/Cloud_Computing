@@ -78,18 +78,18 @@
 2. **Creiamo il file `db.json`:**
     ```json
     [
-        {"name": "red", "red": 255, "green": 0, "blue": 0},
-        {"name": "green", "red": 0, "green": 255, "blue": 0},
-        {"name": "blue", "red": 0, "green": 0, "blue": 255}
+        {"id": "red", "red": 255, "green": 0, "blue": 0},
+        {"id": "green", "red": 0, "green": 255, "blue": 0},
+        {"id": "blue", "red": 0, "green": 0, "blue": 255}
     ]
     ```
 3. **Creiamo il database Firestone in Gcloud Platform: [link](https://console.cloud.google.com/welcome/new?hl=it).**
-4. **Creiamo il file `firestone.py`:** usato per gestire la creazione/modifica/eliminazione dei dati Per creare velocemente i file.
+4. **Creiamo il file `file_firestone.py`:** usato per gestire la creazione/modifica/eliminazione dei dati Per creare velocemente i file.
 
     ```python
     from google.cloud import firestore
     from datetime import datetime
-    from time_utils.py import *
+    from time_utils import *
     import json
 
     DB_NAME = None #MODIFICA
@@ -101,7 +101,7 @@
             if DB_NAME:
                 self.db = firestore.Client(database=DB_NAME)
             else:
-                self.db = firestore.Client()
+                print("Attenzione: nessun database specificato, uso il default.")
 
         def add_element(self, collection_name, document_id, data_dict):
             """
@@ -134,10 +134,10 @@
         # --- PULIZIA DATABASE ---
 
         def clean_db(self):
-            """Cancella TUTTE le collezioni nel database"""
-            collections = self.db.collections()
-            for collection in collections:
-                self.clean_collection(collection.id)
+        """Cancella TUTTE le collezioni nel database"""
+        for collection in self.db.collections():
+            for doc in collection.stream():
+                doc.reference.delete()
 
         def clean_collection(self, collection_name):
             """Svuota una singola collezione"""
@@ -178,7 +178,7 @@ Dalla lettura del file **`dettagli_api.yaml`** fornito, estraiamo:
     from flask import Flask, request
     from flask_restful import Resource, Api
     from file_firestone import *
-    from time_utils.py import *
+    from time_utils import *
     from flask_cors import CORS
     import re
 
@@ -187,7 +187,7 @@ Dalla lettura del file **`dettagli_api.yaml`** fornito, estraiamo:
     api=Api(app)
     base_path='/api/v1'
 
-    database_firestone = Classe_firestore() #DA MODIFICARE 
+    db_firestone = FirestoreManager()
 
     class FirstResource(Resource):
         
@@ -227,6 +227,22 @@ Dalla lettura del file **`dettagli_api.yaml`** fornito, estraiamo:
     """
     ```
     **$\color{red}{\text{N.B.}}$** Per ogni path definito nel file yaml definisco una classe.
+    
+    Per filtrare la lista di dizionari in base al valore di una key:
+    ```python
+    l_filtered = [elem for elem in l if elem['id'].split('_')[0] == data]
+    ```
+    Per creare una lista di dizionari utilizzando solo alcuni campi:
+     ```python
+    l_ordini = [
+        {
+            "asilo": item["id"].split("_", 1)[1], 
+            "bambini": item["bimbi"]
+        } 
+        for item in l_filtered 
+    ]
+    ```   
+
 2. **File `api.yaml`:**
     ```yaml
     runtime: python313
@@ -384,7 +400,7 @@ L'obiettivo è quello di creare un'interfaccia web per visualizzare i dati all'i
    
     
 2. **File `main.py`:**
-   ```python
+    ```python
     from flask import Flask, render_template, request, redirect
     from file_firestone import *
     from wtforms import Form, StringField, IntegerField, SubmitField, validators
