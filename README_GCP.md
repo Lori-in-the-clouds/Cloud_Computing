@@ -250,14 +250,14 @@ Dalla lettura del file **`dettagli_api.yaml`** fornito, estraiamo:
     entrypoint: gunicorn api:app
     instance_class: F1
     automatic_scaling:
-    max_instances: 1
+        max_instances: 1
 
     handlers:
     - url: /static
-    static_dir: static
+      static_dir: static
     - url: /.*
-    secure: always
-    script: auto
+      secure: always
+      script: auto
     ```
     **$\color{red}{\text{N.B.}}$** `gunicorn api:app` → avvia Gunicorn usando l’oggetto `app` che si trova nel file `api.py`.
     
@@ -334,37 +334,37 @@ L'obiettivo è quello di creare un'interfaccia web per visualizzare i dati all'i
     * Tabella:
         ```html
         <table class="table">
-        <thead>
-            <!-- Nomi delle colonne -->
-            <tr>
-            <th>Nome</th>
-            <th>Età</th>
-            <th>Città</th>
-            </tr>
-            
-        </thead>
+            <thead>
+                <!-- Nomi delle colonne -->
+                <tr>
+                <th>Nome</th>
+                <th>Età</th>
+                <th>Città</th>
+                </tr>
+                
+            </thead>
 
-        <tbody>
-            <!-- Prima riga -->
-            <tr>
-            <td>Lorenzo</td>
-            <td>25</td>
-            <td>Roma</td>
-            </tr>
-            <!-- Seconda riga -->
-            <tr>
-            <td>Marco</td>
-            <td>30</td>
-            <td>Milano</td>
-            </tr>
-        </tbody>
+            <tbody>
+                <!-- Prima riga -->
+                <tr>
+                <td>Lorenzo</td>
+                <td>25</td>
+                <td>Roma</td>
+                </tr>
+                <!-- Seconda riga -->
+                <tr>
+                <td>Marco</td>
+                <td>30</td>
+                <td>Milano</td>
+                </tr>
+            </tbody>
         </table>
         ```
     * Form:
         ```html
         <form method="POST">
             <table>
-                <tr><td>{{cform.name.label}}</td><td>{{cform.name}}</td></tr>
+            <tr><td>{{cform.name.label}}</td><td>{{cform.name}}</td></tr>
             <tr><td>{{cform.red.label}}</td><td>{{cform.red}}</td></tr>
             <tr><td>{{cform.green.label}}</td><td>{{cform.green}}</td></tr>
             <tr><td>{{cform.blue.label}}</td><td>{{cform.blue}}</td></tr>
@@ -403,8 +403,8 @@ L'obiettivo è quello di creare un'interfaccia web per visualizzare i dati all'i
     ```python
     from flask import Flask, render_template, request, redirect
     from file_firestone import *
-    from wtforms import Form, StringField, IntegerField, SubmitField, validators
-    from time_utils.py import *
+    from wtforms import DateField, EmailField, Form, StringField, IntegerField, SubmitField, validators
+    from time_utils import *
 
     #Creiamo applicazione web
     app = Flask(__name__)
@@ -425,7 +425,7 @@ L'obiettivo è quello di creare un'interfaccia web per visualizzare i dati all'i
         data = DateField('Data', format='%Y-%m-%d') 
         email = EmailField('Email', [validators.Email()])
         submit = SubmitField('Salva Modifiche')
-          
+        
     '''
     Definiamo quindi le funzioni che gestiscono i metodi dell'applicazione (GET, POST, PUT, DELETE). 
     Ogni funzione dichiara che tipo di metodi può gestire attraverso `methods=[LISTA_METODI]. 
@@ -433,7 +433,7 @@ L'obiettivo è quello di creare un'interfaccia web per visualizzare i dati all'i
     '''
     @app.route('/path', methods=['GET']) 
     def nome_della_funzione():
-        return render_template("TEMPLATE_HTML", PARAMETRI...)
+        return render_template("FILE.HTML", NOME_PARAMETRO="PARAMETRO")
         
     '''
     Il secondo path che dobbiamo gestire risulta essere variabile poiché è presente un parametro dopo una parte che che rimane costante /path/<PARAM>. 
@@ -444,34 +444,22 @@ L'obiettivo è quello di creare un'interfaccia web per visualizzare i dati all'i
         if request.method == 'POST':
             cform = FirstForm(request.form)
 
-            if cfrom.validate():
-                db.add_element(COLLECTION_NAME, cform.name.data, dati_da_salvare)
+            if cform.validate():
+                db.add_element("COLLECTION_NAME", cform.name.data, "dati_da_salvare")
                 return redirect("/path/" + cform.name.data, code=302)
         
-        element = object_dao.get_element_by_name(PARAM)
+        element = db_firestone.get_element_by_name(PARAM)
 
         if request.method == 'GET':
-            cform=Classeform(obj=Struct(**element))
+            cform=FirstForm(obj=Struct(**element))
             cform.name.data = PARAM
-        return render_template("TEMPLATE_HTML", NOME_PARAMETRO=PARAMETRO)
-    
+        return render_template("FILE.HTML", NOME_PARAMETRO="PARAMETRO")
+
     #Per fare debug in locale
     """
     if __name__=='__main__':
         app.run(host="localhost", port=8080, debug=True)
     """
-   ```
-   Se si devono inserire due WTForm all'interno della stessa pagina si devono creae due metodi che rispondono a due path differenti:
-   ```python
-    @app.route('/secretsanta/classeform', methods=['POST'])
-    def function_specific():
-        rform = Classeform(request.form)
-        return render_template("add_member.html", rform=Classeform(), fform=Registration())
-        
-    @app.route('/secretsanta/Registration', methods=['POST'])
-    def function_finder():
-        fform=Registration(request.form)
-        return render_template("add_member.html", rform=Classeform(), fform=Registration())
    ```
 * **File `app.yaml`:**
     ```yaml
@@ -479,17 +467,17 @@ L'obiettivo è quello di creare un'interfaccia web per visualizzare i dati all'i
 
     instance_class: F1
     automatic_scaling:
-    max_instances: 1
+        max_instances: 1
 
     entrypoint: gunicorn main:app
     service: web
 
     handlers:
     - url: /static
-    static_dir: static
+      static_dir: static
     - url: /.*
-    secure: always
-    script: auto
+      secure: always
+      script: auto
     ```
 * **Deploy:**
   ```bash
@@ -839,6 +827,21 @@ def da_ddmmyyyy_a_yyyymmdd(data_str: str) -> str:
 def da_yyyymmdd_a_ddmmyyyy(data_str: str) -> str:
     d = datetime.strptime(data_str, "%Y-%m-%d")
     return d.strftime("%d-%m-%Y")
+
+
+def get_past_dates(days: int) -> list[str]:
+    """
+    Returns a list of dates as strings in format DD-MM-YYYY,
+    going backwards from today, including today.
+    
+    :param days: number of days to go back (including today)
+    :return: list of date strings
+    """
+    today = datetime.today()
+    return [
+        (today - timedelta(days=i)).strftime("%d-%m-%Y")
+        for i in range(days)
+    ]
 ```
 
 `datetime.replace()`
