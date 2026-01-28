@@ -711,7 +711,93 @@ Si devono quindi creare i seguenti file all’interno della directory `func_stat
                 
                 **$\color{red}{\text{N.B.}}$** Bisogna tenere a mente che l'osservabilità viene comunque sempre fatta sui documenti, ovvero sono sempre loro che determinano lo scatenarsi di un evento.
 ---
-# 7. File `time_utils.py`
+# 7. PubSub
+1. **Settiamo le variabili di ambiente** (devono essere settate in tutti i terminali che utilizziamo)**:**
+   ```bash
+   export TOPIC_NAME="TOPIC_NAME"
+   export SUBSCRIPTION_NAME="SUBSCRIPTION_NAME"
+   export PROJECT_ID="PROJECT_NAME"
+   ````
+   Per controllare tutte le variabili:
+   ```bash
+   echo $TOPIC_NAME
+   echo $SUBSCRIPTION_NAME
+   echo $PROJECT_ID
+   ````
+
+2. **Creiamo il topic e la subscription su gcloud:**
+   ```bash
+   gcloud pubsub topics create $TOPIC_NAME
+   gcloud pubsub subscriptions create $SUBSCRIPTION_NAME --topic=$TOPIC_NAME
+   ````
+
+3. **Scriviamo il codice del pub e del sub:**
+
+    * **Codice del publisher:** il Publisher non è quasi mai un file a sé stante che lanci separatamente. È una funzione integrata nel tuo codice principale.
+  
+        ```python
+        import os
+        import json
+        from google.cloud import firestore
+        from google.cloud import pubsub_v1
+        ```
+        Inizializziamo il publisher:
+        ```python
+        publisher = pubsub_v1.PublisherClient()
+        topic_path = publisher.topic_path(os.environ['PROJECT_ID'], os.environ['TOPIC_NAME']) 
+        ```
+        Appena ricevi i dati che devi notifare, utilizziamo il seguente codice:
+         ```python
+        data={'key1': 'value1', 'key2': 'value2'}
+        res = publisher.publish(topic_path, json.dumps(data).encode('utf-8'))
+        ```       
+    * **`subscriber.py`:**
+        ```python
+        import os
+        import sys
+        import json
+        from google.cloud import pubsub_v1
+        from google.cloud import firestore
+
+        project_id = os.environ['PROJECT_ID']
+        sub_name = os.environ['SUBSCRIPTION_NAME']
+
+        subscriber = pubsub_v1.SubscriberClient()
+        sub_path = subscriber.subscription_path(project_id, sub_name)
+
+        # Se vuoi legger qualcosa passata per linea di comando
+        cap_interessati = sys.argv[1:] 
+
+        #Funzione che scatta automaticamente quando arriva un mesaggio
+        def callback(message):
+            message.ack() #Conferma la ricezione
+            dati = json.loads(message.data.decode('utf-8'))
+            value1 = dati.get('key1')
+            value2 = dati.get('key2')
+
+            #if not cap_interessati or str(cap_messaggio) in cap_interessati:
+            print("Abbiamo ricevuto....")
+
+        if __name__ == '__main__':
+            print("Tentativo di avvio del Subscriber...")
+            pull = subscriber.subscribe(sub_path, callback=callback)
+            try:
+                print(f"In ascolto su {sub_path}...")
+                pull.result()
+            except Exception as e:
+                # Se c'è un errore (es. permessi, nomi sbagliati), ora lo vedrai scritto!
+                print(f"❌ Il subscriber si è fermato per un errore: {e}")
+                pull.cancel()
+            except KeyboardInterrupt:
+                # Questo serve per quando premi Ctrl+C
+                pull.cancel()
+                print("\n🛑 Subscriber fermato manualmente.")
+        ```
+
+4. **In un terminale far partire il pub (va bene anche in locale)**
+5. **In un altro terminale fai partire il sub**
+---
+# 8. File `time_utils.py`
 ```python
 from datetime import datetime, time, timedelta
 from dateutil.relativedelta import relativedelta
@@ -905,7 +991,7 @@ Per modificare una data partendo da una iniziale utiliziamo: `datetime.replace()
 data_parziale = data_parziale.replace(year=data_parziale.year + 1,month= 1)
 ```
 ---
-# 8. Staccare il Billing del Progetto o Eliminarlo
+# 9. Staccare il Billing del Progetto o Eliminarlo
 * **Per disattivare il billing:**
     
     ```python
