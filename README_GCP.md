@@ -214,11 +214,13 @@ Dalla lettura del file **`dettagli_api.yaml`** fornito, estraiamo:
 
 
     #Ecco un esempio in cui il path possiede solamente un metodo e non è presente alcun parametro:
+    """
     class SecondResource(Resource):
         def get(self):
             return colors_dao.get_colors(), 200
             
     api.add_resource(ColorList, f'{base_path}/colors')
+    """
 
     #Per fare debug in locale
     """
