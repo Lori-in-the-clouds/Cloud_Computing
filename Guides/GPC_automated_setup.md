@@ -535,4 +535,4 @@
     ```
 ---
 
-**➡️ Continua con il Capitolo 2 nella sezione dedicata a Google Cloud Platform: [📂 View Guide](/Guides/GCP.md)**
+**➡️ Continua con il Capitolo 2 nella sezione dedicata a Google Cloud Platform: [📂 View Guide](/Guides/GCP.md#2-configurazione-firestone)**
