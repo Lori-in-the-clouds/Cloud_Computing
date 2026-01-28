@@ -26,7 +26,7 @@ Navigate through the specific guides to get started:
 | Resource | Description | Link |
 | :--- | :--- | :--- |
 | **GCP Guide** | Full templates, deployment commands, and Firestore logic. | [📂 View Guide](/Guides/GCP.md) |
-| **GCP Guide Automated Setup** | Full templates, deployment commands, and Firestore logic. | [📂 View Guide](/Guides/GCP.md) |
+| **GCP Guide Automated Setup** | Full templates, deployment commands, and Firestore logic. | [📂 View Guide](/Guides/GPC_automated_setup.md) |
 | **OMNeT++ Guide** | Simulation environment setup and NED file structures. | [📂 View Guide](/Guides/OMNET++.md) |
 ---
 
