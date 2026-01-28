@@ -161,7 +161,7 @@
 
     if __name__ == '__main__':
         db = FirestoreManager()
-        db.populate_from_json('db.json',collection_name)
+        db.populate_from_json('db.json',collection_target="COLLECTION_NAME")
     ```
 ---        
 # 3. RESTful API
