@@ -18,6 +18,8 @@ WTForms==3.0.1
 email-validator==2.3.0
 python-dateutil==2.9.0.post0
 google-cloud-pubsub==2.34.0
+PyYAML==6.0.3
+requests==2.32.5
 """
 
 # 2. .gcloudignore (Dal punto 6 del README_GCP.md)
@@ -537,6 +539,8 @@ if __name__ == "__main__":
     email-validator==2.3.0
     python-dateutil==2.9.0.post0
     google-cloud-pubsub==2.34.0
+    PyYAML==6.0.3
+    requests==2.32.5
     ```
 5. **Installiamo i requirements nell’environment:**
    ```bash
