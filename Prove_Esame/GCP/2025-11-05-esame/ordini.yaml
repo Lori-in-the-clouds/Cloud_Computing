@@ -1,0 +1,157 @@
+swagger: "2.0"
+
+info:
+  version: "1.1"
+  title: "Mensa Asili"
+  description: "API per la gestione delle prenotazioni dei pasti degli asili"
+
+host: "[YOUR_PROJECT_ID].appspot.com"
+basePath: "/api/v1"
+
+schemes:
+  - https
+
+paths:
+  /clean:
+    post:
+      description: "Pulisce il database delle prenotazioni"
+      operationId: "cleanDatabase"
+      responses:
+        200:
+          description: "Ok"
+
+  /mensa/{data}:
+    parameters:
+      - name: data
+        in: path
+        required: true
+        description: "Data del pasto in formato DD-MM-YYYY"
+        type: string
+        format: date
+    post:
+      description: "Crea la prenotazione di un asilo per una certa data. Fallisce se l'asilo esiste già per quella data."
+      operationId: "CreatePrenotazione"
+      consumes:
+        - application/json
+      parameters:
+        - in: body
+          name: Prenotazione
+          required: true
+          description: "Dati della prenotazione"
+          schema:
+            type: object
+            required:
+              - asilo
+              - bambini
+            properties:
+              asilo:
+                type: string
+                description: "Nome dell'asilo"
+              bambini:
+                type: integer
+                minimum: 1
+                description: "Numero di bambini/pasti richiesti"
+      responses:
+        201:
+          description: "Prenotazione creata"
+          schema:
+            $ref: "#/definitions/Prenotazione"
+        400:
+          description: "Richiesta non valida (dati mancanti, data errata, o asilo già presente per quella data)"
+        409:
+          description: "Conflitto nella richiesta (duplicazione)"
+    put:
+      description: "Aggiorna una prenotazione esistente per un asilo in una certa data"
+      operationId: "UpdatePrenotazione"
+      consumes:
+        - application/json
+      parameters:
+        - in: body
+          name: Prenotazione
+          required: true
+          description: "Dati della prenotazione"
+          schema:
+            type: object
+            required:
+              - asilo
+              - bambini
+            properties:
+              asilo:
+                type: string
+                description: "Nome dell'asilo"
+              bambini:
+                type: integer
+                minimum: 1
+                description: "Numero di bambini/pasti richiesti"
+      responses:
+        200:
+          description: "Prenotazione aggiornata"
+          schema:
+            $ref: "#/definitions/Prenotazione"
+        400:
+            description: "Richiesta non valida (dati mancanti o data errata)"
+        404:
+            description: "Prenotazione per data e asilo specificati non trovata"
+
+    get:
+      description: "Restituisce il totale dei pasti e il dettaglio per asilo in una certa data"
+      operationId: "GetRiepilogoGiorno"
+      responses:
+        200:
+          description: "Riepilogo della giornata"
+          schema:
+            $ref: "#/definitions/RiepilogoGiorno"
+        400:
+          description: "Richiesta non valida"
+
+definitions:
+  Prenotazione:
+    type: object
+    required:
+      - data
+      - asilo
+      - bambini
+    properties:
+      data:
+        type: string
+        description: "Data della prenotazione in formato DD-MM-YYYY"
+      asilo:
+        type: string
+      bambini:
+        type: integer
+        minimum: 1
+
+  OrdineAsilo:
+    type: object
+    required:
+      - asilo
+      - bambini
+    properties:
+      asilo:
+        type: string
+      bambini:
+        type: integer
+        minimum: 1
+
+  RiepilogoGiorno:
+    type: object
+    required:
+      - data
+      - totale
+      - ordini
+    properties:
+      data:
+        type: string
+        description: "Data del pasto in formato DD-MM-YYYY"
+      totale:
+        type: integer
+        description: "Totale pasti da preparare per la giornata"
+      trend:
+        type: number
+        multipleOf: 0.1
+        description: "Trend rispetto alla settimana precedente"
+      ordini:
+        type: array
+        description: "Lista degli asili con i pasti confermati"
+        items:
+          $ref: "#/definitions/OrdineAsilo"

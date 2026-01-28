@@ -1,0 +1,9 @@
+Flask==3.1.2
+flask-cors==6.0.2
+Flask-RESTful==0.3.9
+google-cloud-firestore==2.22.0
+gunicorn==23.0.0
+WTForms==3.0.1
+email-validator==2.3.0
+python-dateutil==2.9.0.post0
+google-cloud-pubsub==2.34.0
