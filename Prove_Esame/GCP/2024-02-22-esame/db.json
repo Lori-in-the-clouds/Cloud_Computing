@@ -1,0 +1,6 @@
+[
+    {"id": "1", "nome":"Mario", "cognome":"Rossi", "cap": 41125},
+    {"id": "2", "nome":"Valter" , "cognome":"Ometti", "cap": 41121},
+    {"id": "3", "nome":"Ernesto", "cognome":"Guardalocchi", "cap": 42122},
+    {"id": "4", "nome":"Eugenio", "cognome":"Quadri", "cap": 42124}
+]

@@ -1,0 +1,10 @@
+# Ambiente virtuale
+.venv/
+
+# Credenziali e chiavi (MOLTO IMPORTANTE)
+credentials.json
+
+# File di sistema e IDE
+.DS_Store
+.vscode/
+__pycache__/
