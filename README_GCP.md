@@ -134,10 +134,10 @@
         # --- PULIZIA DATABASE ---
 
         def clean_db(self):
-        """Cancella TUTTE le collezioni nel database"""
-        for collection in self.db.collections():
-            for doc in collection.stream():
-                doc.reference.delete()
+            """Cancella TUTTE le collezioni nel database"""
+            for collection in self.db.collections():
+                for doc in collection.stream():
+                    doc.reference.delete()
 
         def clean_collection(self, collection_name):
             """Svuota una singola collezione"""
