@@ -419,10 +419,10 @@ L'obiettivo è quello di creare un'interfaccia web per visualizzare i dati all'i
         def __init__(self, **entries):
             self.__dict__.update(entries)
 
-    '''
+    """
     Per utilizzare i WTForm dichiariamo una classe che eredita da Form in cui spefichiamo i nomi e la tipologia di field 
     e validators per i dati che saranno inseriti al loro interno.
-    '''
+    """
     class FirstForm(Form):
         name = StringField('Name', [validators.DataRequired()])
         valore = IntegerField('Valore', [validators.NumberRange(min=0, max=1000)])
@@ -431,11 +431,11 @@ L'obiettivo è quello di creare un'interfaccia web per visualizzare i dati all'i
         tipo_scelta = RadioField('Cerca in:', choices=['dumarell', 'cantiere'], default='dumarell')
         submit = SubmitField('Salva Modifiche')
         
-    '''
+    """
     Definiamo quindi le funzioni che gestiscono i metodi dell'applicazione (GET, POST, PUT, DELETE). 
     Ogni funzione dichiara che tipo di metodi può gestire attraverso `methods=[LISTA_METODI]. 
     La funzione dovrà poi eseguire un return sul render del template HTML inserendo come parametri quelli richiesti da quello specifico template.
-    '''
+    """
     @app.route('/path', methods=['GET']) 
     def nome_della_funzione():
         return render_template("FILE.HTML", NOME_PARAMETRO="PARAMETRO")

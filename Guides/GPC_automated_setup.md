@@ -323,7 +323,7 @@
     # 8. main.py (Entry point + Web App)
     CONTENT_MAIN = '''from flask import Flask, render_template, request, redirect
     from file_firestone import *
-    from wtforms import DateField, EmailField, Form, StringField, IntegerField, SubmitField, validators
+    from wtforms import DateField, EmailField, Form, RadioField, StringField, IntegerField, SubmitField, validators
     from time_utils import *
 
     #Creiamo applicazione web
@@ -344,8 +344,9 @@
         valore = IntegerField('Valore', [validators.NumberRange(min=0, max=1000)])
         data = DateField('Data', format='%Y-%m-%d') 
         email = EmailField('Email', [validators.Email()])
+        tipo_scelta = RadioField('Cerca in:', choices=['dumarell', 'cantiere'], default='dumarell')
         submit = SubmitField('Salva Modifiche')
-        
+    
     """
     Definiamo quindi le funzioni che gestiscono i metodi dell'applicazione (GET, POST, PUT, DELETE). 
     Ogni funzione dichiara che tipo di metodi può gestire attraverso `methods=[LISTA_METODI]. 
@@ -354,26 +355,64 @@
     @app.route('/path', methods=['GET']) 
     def nome_della_funzione():
         return render_template("FILE.HTML", NOME_PARAMETRO="PARAMETRO")
+    
+    """Per CERCARE un elemento del database attraverso un FORM HTML"""
+    @app.route('/cerca', methods=["GET", "POST"])
+    def cerca_elementi():
+        # Inizializziamo il form e le variabili di supporto
+        cform = FirstForm(request.form)
+        risultati = []
+        scelta = None
+
+        # AZIONE: L'utente ha premuto il tasto Submit
+        if request.method == 'POST' and cform.validate():
+            # 1. Recupero parametri dal form
+            valore_filtro = cform.cap.data
+            collezione = cform.tipo_scelta.data
+            scelta = collezione # Per ricordarci cosa stiamo guardando nell'HTML
+
+            # 2. Prendiamo tutto dalla collezione scelta (es. 'umarell' o 'cantiere')
+            tutti = db_firestone.get_all_elements(collezione)
+
+            # 3. Filtriamo per il campo 'cap' confrontandolo con quanto inserito dall'utente
+            risultati = [item for item in tutti if item.get("cap") == valore_filtro]
+
+        # VISUALIZZAZIONE: Restituiamo sempre lo stesso template
+        # In GET: risultati sarà [] e il form sarà vuoto
+        # In POST: risultati conterrà i dati filtrati
+        return render_template("FILE.html", cform=cform, elements=risultati, tipo=scelta)
+
+    """Per MODIFICARE un elemento preesistente del database attraverso un FORM HTML"""   
+    @app.route('/path/<ID_PARAM>', methods=['GET', 'POST'])
+    def funzione_modifica(ID_PARAM):
+        # 1. Recupero dati dal Database
+        # Questa riga serve a caricare i dati attuali per mostrarli nel form
+        elemento_esistente = db_firestone.get_element(collection_name="NOME_COLLEZIONE", document_id=ID_PARAM)
         
-    """
-    Il secondo path che dobbiamo gestire risulta essere variabile poiché è presente un parametro dopo una parte che che rimane costante /path/<PARAM>. 
-    Questo dovrà essere inserito come parametro della nostra funzione (scritto nello stesso modo) in modo da poterlo utilizzare.
-    """
-    @app.route('/path/<PARAM>', methods=['GET', 'POST'])
-    def nome_della_funzione(PARAM):
+        # Controllo di sicurezza: se l'ID non esiste, torna alla home o lista
+        if not elemento_esistente:
+            return redirect("/url_lista_generale")
+
+        # 2. Gestione INVIO DATI (POST)
         if request.method == 'POST':
             cform = FirstForm(request.form)
-
             if cform.validate():
-                db.add_element("COLLECTION_NAME", cform.name.data, "dati_da_salvare")
-                return redirect("/path/" + cform.name.data, code=302)
-        
-        element = db_firestone.get_element_by_name(PARAM)
+                # Creiamo il dizionario con i nuovi dati presi dal form
+                dati_aggiornati = {
+                    "campo1": cform.campo1.data,
+                    "campo2": cform.campo2.data,
+                    # ... aggiungi tutti i campi necessari ...
+                }
+                # Sovrascriviamo il documento nel DB usando lo stesso ID
+                db_firestone.add_element("NOME_COLLEZIONE", document_id=ID_PARAM, data_dict=dati_aggiornati)
+                
+                # Redirect dopo il salvataggio per evitare invii doppi (F5)
+                return redirect("/path/" + ID_PARAM)
 
-        if request.method == 'GET':
-            cform=FirstForm(obj=Struct(**element))
-            cform.name.data = PARAM
-        return render_template("FILE.HTML", NOME_PARAMETRO="PARAMETRO")
+        # 3. Gestione VISUALIZZAZIONE (GET)
+        # Pre-compiliamo il form con i dati recuperati dal database al punto 1
+        cform = FirstForm(data=elemento_esistente)
+        return render_template("FILE.html", cform=cform, id_elemento=ID_PARAM)
 
     #Per fare debug in locale
     """
@@ -381,8 +420,6 @@
         app.run(host="localhost", port=8080, debug=True)
     """
     '''
-
-
     CONTENT_FILE_FIRESTONE='''from google.cloud import firestore
     from datetime import datetime
     from time_utils import *
