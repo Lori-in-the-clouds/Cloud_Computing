@@ -1,5 +1,5 @@
 # Lab RestFUL - Google Cloud Platform
-## 0. Setup Rapito
+## 0. Setup Rapido
 Per settare rapidamente tutti i file necessari, utilizziamo lo script presnete nel file `init_gcp.py`:
 ```python
 import os
