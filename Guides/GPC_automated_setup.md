@@ -76,7 +76,7 @@
     """
 
     # 6. time_utils.py (Dalla Sezione 5 del README_GCP.md)
-        CONTENT_TIME_UTILS = '''from datetime import datetime, time, timedelta
+    CONTENT_TIME_UTILS = '''from datetime import datetime, time, timedelta
     from dateutil.relativedelta import relativedelta
     import calendar
 
