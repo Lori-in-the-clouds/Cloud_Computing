@@ -191,6 +191,39 @@ Dalla lettura del file **`dettagli_api.yaml`** fornito, estraiamo:
 
     db_firestone = FirestoreManager()
 
+        def validate_payload(data, required_fields):
+        """
+        Controlla se i campi richiesti esistono, se i tipi sono corretti
+        e se i valori sono validi.
+        """
+        for field, expected_type in required_fields.items():
+            val = data.get(field)
+            
+            # 1. Controllo esistenza
+            if val is None:
+                return False, f"Campo {field} mancante"
+            # 2. Controllo tipo (es. int, str, bool)
+            if not isinstance(val, expected_type):
+                return False, f"Campo {field} deve essere di tipo {expected_type.__name__}"
+            # 3. Controlli logici specifici (opzionale)
+            if expected_type == int and val < 0:
+                return False, f"Campo {field} non può essere negativo"
+            # 4. Controllo Email
+            if field == "email":
+                if not re.match(r"[^@]+@[^@]+\.[^@]+", val):
+                    return False, "Email non valida" 
+            # 5. Controllo Data
+            if field == "date":
+                try:
+                    datetime.strptime(val, "%d-%m-%Y")
+                except ValueError:
+                    return False, "Data non valida, formato richiesto gg-mm-YYYY"
+                            
+                    return True, None   
+            # 6. Stringhe non vuote
+            if expected_type == str and val.strip() == "":
+                return False, f"Campo {field} non può essere vuoto"
+
     class FirstResource(Resource):
         
         # Per ottenere una risorsa
@@ -218,10 +251,11 @@ Dalla lettura del file **`dettagli_api.yaml`** fornito, estraiamo:
     #Ecco un esempio in cui il path possiede solamente un metodo e non è presente alcun parametro:
     """
     class SecondResource(Resource):
-        def get(self):
-            return colors_dao.get_colors(), 200
-            
-    api.add_resource(ColorList, f'{base_path}/colors')
+    def post(self):
+        db_firestone.clean_collection("COLLECTION_NAME")
+        return None,200
+        
+    api.add_resource(SecondResource, f'{base_path}/clean')
     """
 
     #Per fare debug in locale
@@ -269,7 +303,15 @@ Dalla lettura del file **`dettagli_api.yaml`** fornito, estraiamo:
 3. **Debug:** per testare e fare debug dell’API si può usare [SwaggerEditor](https://editor.swagger.io/). È sufficiente **copiare il file OpenAPI (YAML) fornito dal professore** e incollarlo nell’editor per visualizzare la documentazione e testare gli endpoint.
     - **In locale** → usare **`HTTP`** invece di `HTTPS` e impostare `host: "localhost:8080”`.
     - **In cloud** → impostare `host:"api-dot-nomeprogetto.appspot.com"`, `api-dot-` va usato solo se il servizio non è quello di default.
-4. **Deploy:**
+4. **Testing con file `tester_yaml.py`**: avviamo in locale il file `api.py` mentre in un altro terminale avviamo il file `tester_yaml.py`. Assicurati di puntare all’URL corretto della tua API locale nel file `tester_yaml.py`:
+     ```python
+    if __name__ == "__main__":
+    # test = TestEndpoints('https://[YOUR_PROJECT_ID].appspot.com')
+    test = TestEndpoints('http://localhost:8080')       
+    pprint(test.validate_apis())
+    ```
+    
+5. **Deploy:**
     
     ```bash
     gcloud app deploy api.yaml
@@ -530,107 +572,75 @@ L'obiettivo è quello di creare un'interfaccia web per visualizzare i dati all'i
 # 6. Function
 Le function sono delle Action che vengono eseguite in risposta al verificarsi di un determinato Event. Affinché un evento determini esecuzione di una funzione, questo deve essere stato collegato tramite un Trigger. Il nostro obiettivo sarà quello di creare la funzione (action) e collegarla tramite un trigger all'osservazione di uno specifico evento.
 
-Si devono quindi creare i seguenti file all’interno della directory `func_stat/`:
-* **`requirements.txt`:**
+*  **`main.py`:** possiamo avere due tipologie:
+     * **HTTP Function**: questo tipo di function accetta solamente un oggetto `request` e restituisce un valore (tipicamente `string` o `HTML`). Tutte le informazioni sulla richiesta (metodo, URL, headers, body, query params, ecc.) sono contenute in request.
+        ```python
+        from flask import Flask, request
 
-    ```
-    google-cloud-firestore==2.22.0 
-    flask==2.3.3
-    ```
-* **`.gcloudignore`:**
-  
-    ```
-    .git
-    .gitignore
+        db = firestore.Client(database="NOME_DATABASE")
 
-    __pycache__/
-    .venv/
-
-    /setup.cfg
-    credentials.json
-    ```
-* **`main.py`:** possiamo avere due tipologie:
-  * **HTTP Function**: questo tipo di function accetta solamente un oggetto `request` e restituisce un valore (tipicamente `string` o `HTML`). Tutte le informazioni sulla richiesta (metodo, URL, headers, body, query params, ecc.) sono contenute in request.
-    ```python
-    from flask import Flask, request
-
-    db = firestore.Client(database="NOME_DATABASE")
-
-    def HTTP_FUNCTION(request):
-        if request.method == 'GET':
-            path = request.path
-            pages = path.split('/')
-            return 'STRING'
-    ```
-  * **Event-driven Function (Gen 1):** questo tipo di function accetta due parametri `data` e `context` e sono utilizzate solitamente da eventi come Pub/Sub o Firestore. In particolare il parametro `data` contiene:
-    ```json
-    {
-    "oldValue": {}, 
-
-        "value": {
-            "createTime": "2025-01-10T10:00:00.000Z",
-            "fields": {
-            "bambini": {
-                "integerValue": "25" 
+        def HTTP_FUNCTION(request):
+            if request.method == 'GET':
+                path = request.path
+                pages = path.split('/')
+                return 'STRING'
+        ```
+     * **Event-driven Function (Gen 1):** questo tipo di function accetta due parametri `data` e `context` e sono utilizzate solitamente da eventi come Pub/Sub o Firestore. In particolare il parametro `data` contiene:
+        ```json
+        {
+            "oldValue": {}, 
+            "value": {
+                "createTime": "2025-01-10T10:00:00.000Z",
+                "fields": {
+                    "bambini": {
+                        "integerValue": "25" 
+                    },
+                    "nome_asilo": {
+                    "stringValue": "AsiloRossi"
+                    }
+                },
+                "name": "projects/mensa-esame/databases/mensa/documents/prenotazioni/AsiloRossi_2025-10-10",
+                "updateTime": "2025-01-10T10:00:00.000Z"
             },
-            "nome_asilo": {
-                "stringValue": "AsiloRossi"
+            "updateMask": {
+                "fieldPaths": [ "bambini" ]
             }
-            },
-            "name": "projects/mensa-esame/databases/mensa/documents/prenotazioni/AsiloRossi_2025-10-10",
-            "updateTime": "2025-01-10T10:00:00.000Z"
-    },
+        }
+        ```
+        **$\color{red}{\text{N.B.}}$** Anche se i valori memorizzati rappresentano numeri interi, nei trigger di Firestore essi vengono forniti come **stringhe**.
 
-    "updateMask": {
-        "fieldPaths": [ "bambini" ]
-    }
-    }
-    ```
+        ```python
+        from flask import Flask, render_template, request, redirect
+        from google.cloud import firestore
+        from datetime import datetime, timedelta
 
-    ```python
-    from flask import Flask, render_template, request, redirect
-    from google.cloud import firestore
-    from datetime import datetime, timedelta
+        def update_db(data, context): 
+            db = firestore.Client(database="mensa")
 
-    def update_db(data, context): 
-        db = firestore.Client(database="mensa")
+            document_name = context.resource.split("/")[-1]
 
-        document_name = context.resource.split("/")[-1]
-
-        new_value = data['value'] if len(data["value"]) != 0 else None
-        old_value = data['oldValue'] if len(data["oldValue"]) !=0 else None
-        if new_value and not old_value: # document added
-            pass
-        elif not new_value and old_value: # document removed
-            pass
-        else: # document updated
-            pass
-    ```
-    **$\color{red}{\text{N.B.}}$** Il metodo .params["KEY"] viene usato per accedere al dizionario creato dall'uso delle wildcard (.../temp/{day} → usiamo 'day' come KEY), mentre grazie .resource.split('/')[-1] possiamo ottenere dal path completo il nome del documento.
-
+            new_value = data['value'] if len(data["value"]) != 0 else None
+            old_value = data['oldValue'] if len(data["oldValue"]) !=0 else None
+            if new_value and not old_value: # document added
+                pass
+            elif not new_value and old_value: # document removed
+                pass
+            else: # document updated
+                pass
+        ```
+        Il parametro `context` contiene le informazioni di contesto dell’evento che ha attivato la Cloud Function. In particolare descrive:
+        * il path completo della risorsa Firestore coinvolta: `context.resource`.
+        * i valori delle wildcard definite nel trigger: `.params["KEY"]`.
 
 
 ## 6.1. Deploy
-**Tutti** i seguenti comandi saranno da eseguire mentre ci troviamo all'interno della cartella **`func_stat/`:**
-
 1. **Verifichiamo che le variabili d'ambiente `PROJECT_ID` e `NAME` siano ancora valide** (`NAME` deve essere uguale a quello utilizzato precedentemente):
     
     ```bash
     echo PROJECT_ID = ${PROJECT_ID}
     echo NAME = ${NAME}
     ```
-    
-2. **Creiamo le credenziali e le salviamo in `credentials.json`:**
-    
-    ```bash
-    gcloud projects add-iam-policy-binding ${PROJECT_ID} --member "serviceAccount:${NAME}@${PROJECT_ID}.iam.gserviceaccount.com" --role "roles/owner"
-    touch credentials.json 
-    gcloud iam service-accounts keys create credentials.json --iam-account ${NAME}@${PROJECT_ID}.iam.gserviceaccount.com 
-    export GOOGLE_APPLICATION_CREDENTIALS="$(pwd)/credentials.json"
-    gcloud services enable cloudfunctions.googleapis.com
-    ```
- 
-3. **Il procedimento del deployment da qui in avanti è specifico rispetto al tipo di Function:**
+2. **Il procedimento del deployment da qui in avanti è specifico rispetto al tipo di Function:**
     - **HTTP Function:**
         1. Definiamo il nome della funzione che dovrà essere invocata dalla richiesta HTTP:
             
@@ -644,7 +654,7 @@ Si devono quindi creare i seguenti file all’interno della directory `func_stat
             export RUNTIME=python310
             ```
             
-        3. Deploy:
+        3. **Deploy:**
             
             ```bash
             gcloud functions deploy ${FUNCTION} \
@@ -655,11 +665,24 @@ Si devono quindi creare i seguenti file all’interno della directory `func_stat
               --no-gen2
             ```
             
-        4. Per eseguire il testing possiamo utilizzare l'indirizzo HTTP della funzione a cui aggiungiamo il path che vogliamo verificare. Usando il seguente comando possiamo ottenere una descrizione della function che contiene anche il suo indirizzo HTTP.
-            
+        4. **Testing**: utiliziamo l'URL assegnato da Google Cloud durante il deploy. Per ottnere l'indirizzo HTTP eseguiamo:           
             ```bash
             gcloud functions describe $FUNCTION
             ```
+        
+        5. **Testing in locale:** 
+            ```python
+            @app.route("/", defaults={"path": ""}, methods=["GET", "POST"])
+            @app.route("/<path:path>", methods=["GET", "POST"])
+            def local_test(path):
+                return HTTP_FUNCTION(request)
+            ```
+            In seguito utilizzamo un qualsiasi path per testare la nostra funzione (funziona solo con il `GET`), per esempio:
+            ```bash
+            http://localhost:8080/test
+            ```
+            
+
             
     - **Event driven Function:**
         1. Definiamo le seguenti variabili globali:
@@ -667,13 +690,7 @@ Si devono quindi creare i seguenti file all’interno della directory `func_stat
             ```bash
             export FUNCTION=NOME_FUNZIONE
             export RUNTIME=python310
-            ```
-            
-            ```bash
             export DATABASE=NOME_DATABASE
-            ```
-            
-            ```bash
             export COLLECTION=COLLECTION_NAME
             ```
             
@@ -710,7 +727,26 @@ Si devono quindi creare i seguenti file all’interno della directory `func_stat
                 - `PATH_AL_DOCUMENTO` = `.../{NAME==**}`  → per osservare anche i cambiamenti più in profondità (*utile per le subcollection*)
                 
                 **$\color{red}{\text{N.B.}}$** Bisogna tenere a mente che l'osservabilità viene comunque sempre fatta sui documenti, ovvero sono sempre loro che determinano lo scatenarsi di un evento.
----
+       4. **Testing in locale:**
+          * Togliamo dalla funzione il parametro `context`
+          * Utilizziamo nel main un `fake_event`:
+            ```json
+            fake_event = {
+                "value": {
+                    "name": "projects/test/databases/(default)/documents/letture/12-05-2026",
+                    "fields": {
+                        "value": {
+                            "integerValue": "100"
+                        }
+                    }
+                },
+                "oldValue": {}
+            }
+            ```  
+        * Chiamiamo la funzione inseredno il `fake_event`:
+            ```bash
+            python3 update_db(fake_event)
+            ```
 # 7. PubSub
 1. **Settiamo le variabili di ambiente** (devono essere settate in tutti i terminali che utilizziamo)**:**
    ```bash
@@ -972,6 +1008,33 @@ def giorno_della_settimana_it(data_str: str) -> str:
     if not data: return ""
     giorni = ["Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato", "Domenica"]
     return giorni[data.weekday()]
+
+def mese_it_month(month_str: str) -> str:
+    """Restituisce il nome del mese in italiano (es. 'Gennaio')"""
+    data = from_string_to_month(month_str)
+    if not data:
+        return ""
+
+    mesi = [
+        "Gennaio", "Febbraio", "Marzo", "Aprile",
+        "Maggio", "Giugno", "Luglio", "Agosto",
+        "Settembre", "Ottobre", "Novembre", "Dicembre"
+    ]
+    return mesi[data.month - 1]
+
+def mese_it_date(date_str: str) -> str:
+    """Restituisce il nome del mese in italiano (es. 'Gennaio')"""
+    data = from_string_to_date(date_str)
+    if not data:
+        return ""
+
+    mesi = [
+        "Gennaio", "Febbraio", "Marzo", "Aprile",
+        "Maggio", "Giugno", "Luglio", "Agosto",
+        "Settembre", "Ottobre", "Novembre", "Dicembre"
+    ]
+
+    return mesi[data.month - 1]
 
 def da_ddmmyyyy_a_yyyymmdd(data_str: str) -> str:
     """Converte '10-05-2025' -> '2025-05-10' (Utile per input HTML date)"""

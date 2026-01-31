@@ -77,7 +77,7 @@
     """
 
     # 6. time_utils.py (Dalla Sezione 5 del README_GCP.md)
-    CONTENT_TIME_UTILS = '''from datetime import datetime, time, timedelta
+        CONTENT_TIME_UTILS = '''from datetime import datetime, time, timedelta
     from dateutil.relativedelta import relativedelta
     import calendar
 
@@ -89,7 +89,7 @@
         """Converte oggetto datetime in stringa 'gg-mm-YYYY'"""
         return d.strftime("%d-%m-%Y")
 
-    def from_string_to_date(d_str: str) -> datetime | None:
+    def from_string_to_date(d_str: str) -> datetime:
         """Converte stringa 'gg-mm-YYYY' in oggetto datetime"""
         try:
             return datetime.strptime(d_str, "%d-%m-%Y")
@@ -100,7 +100,7 @@
         """Converte oggetto time in stringa 'HH:MM'"""
         return t.strftime("%H:%M")
 
-    def from_string_to_time(t_str: str) -> time | None:
+    def from_string_to_time(t_str: str) -> time:
         """Converte stringa 'HH:MM' in oggetto time"""
         try:
             return datetime.strptime(t_str, "%H:%M").time()
@@ -111,7 +111,7 @@
         """Converte oggetto datetime in stringa 'MM-YYYY'"""
         return m.strftime("%m-%Y")
 
-    def from_string_to_month(m_str: str) -> datetime | None:
+    def from_string_to_month(m_str: str) -> datetime:
         """Converte stringa 'MM-YYYY' in oggetto datetime"""
         try:
             return datetime.strptime(m_str, "%m-%Y")
@@ -182,7 +182,7 @@
         nuovo = t_obj + timedelta(hours=ore, minutes=minuti)
         return nuovo.strftime("%H:%M")
 
-    def calculate_end_time(start_time_str: str, duration_minutes: int) -> str | None:
+    def calculate_end_time(start_time_str: str, duration_minutes: int) -> str:
         """
         Calcola l'orario di fine.
         Gestisce automaticamente il cambio di giornata (es. 23:00 + 120min -> 01:00).
