@@ -36,7 +36,6 @@
 
     # 3. app.yaml (Standard App Engine Python 3.9)
     CONTENT_APP_YAML = """runtime: python313
-
     instance_class: F1
     automatic_scaling:
         max_instances: 1
@@ -46,10 +45,10 @@
 
     handlers:
     - url: /static
-    static_dir: static
+      static_dir: static
     - url: /.*
-    secure: always
-    script: auto
+      secure: always
+      script: auto
     """
 
     # 4. api.yaml (Placeholder standard)
@@ -62,10 +61,10 @@
 
     handlers:
     - url: /static
-    static_dir: static
+      static_dir: static
     - url: /.*
-    secure: always
-    script: auto
+      secure: always
+      script: auto
     """
 
     # 5. db.json (NUOVO: Dati di esempio per test locali o seed)
@@ -251,6 +250,33 @@
         giorni = ["Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato", "Domenica"]
         return giorni[data.weekday()]
 
+    def mese_it_month(month_str: str) -> str:
+        """Restituisce il nome del mese in italiano (es. 'Gennaio')"""
+        data = from_string_to_month(month_str)
+        if not data:
+            return ""
+
+        mesi = [
+            "Gennaio", "Febbraio", "Marzo", "Aprile",
+            "Maggio", "Giugno", "Luglio", "Agosto",
+            "Settembre", "Ottobre", "Novembre", "Dicembre"
+        ]
+        return mesi[data.month - 1]
+
+    def mese_it_date(date_str: str) -> str:
+        """Restituisce il nome del mese in italiano (es. 'Gennaio')"""
+        data = from_string_to_date(date_str)
+        if not data:
+            return ""
+
+        mesi = [
+            "Gennaio", "Febbraio", "Marzo", "Aprile",
+            "Maggio", "Giugno", "Luglio", "Agosto",
+            "Settembre", "Ottobre", "Novembre", "Dicembre"
+        ]
+
+        return mesi[data.month - 1]
+
     def da_ddmmyyyy_a_yyyymmdd(data_str: str) -> str:
         """Converte '10-05-2025' -> '2025-05-10' (Utile per input HTML date)"""
         d = from_string_to_date(data_str)
@@ -263,10 +289,10 @@
             return d.strftime("%d-%m-%Y")
         except:
             return ""
-    '''
+        '''
 
-    # 7. api.py (Blueprint e Risorse RESTful)
-    CONTENT_API_PY = '''from flask import Flask, request
+        # 7. api.py (Blueprint e Risorse RESTful)
+        CONTENT_API_PY = '''from flask import Flask, request
     from flask_restful import Resource, Api
     from file_firestone import *
     from time_utils import *
@@ -279,6 +305,39 @@
     base_path='/api/v1'
 
     db_firestone = FirestoreManager()
+
+    def validate_payload(data, required_fields):
+        """
+        Controlla se i campi richiesti esistono, se i tipi sono corretti
+        e se i valori sono validi.
+        """
+        for field, expected_type in required_fields.items():
+            val = data.get(field)
+            
+            # 1. Controllo esistenza
+            if val is None:
+                return False, f"Campo {field} mancante"
+            # 2. Controllo tipo (es. int, str, bool)
+            if not isinstance(val, expected_type):
+                return False, f"Campo {field} deve essere di tipo {expected_type.__name__}"
+            # 3. Controlli logici specifici (opzionale)
+            if expected_type == int and val < 0:
+                return False, f"Campo {field} non può essere negativo"
+            # 4. Controllo Email
+            if field == "email":
+                if not re.match(r"[^@]+@[^@]+\.[^@]+", val):
+                    return False, "Email non valida" 
+            # 5. Controllo Data
+            if field == "date":
+                try:
+                    datetime.strptime(val, "%d-%m-%Y")
+                except ValueError:
+                    return False, "Data non valida, formato richiesto gg-mm-YYYY"
+                            
+                    return True, None   
+            # 6. Stringhe non vuote
+            if expected_type == str and val.strip() == "":
+                return False, f"Campo {field} non può essere vuoto"
 
     class FirstResource(Resource):
         
@@ -307,10 +366,11 @@
     #Ecco un esempio in cui il path possiede solamente un metodo e non è presente alcun parametro:
     """
     class SecondResource(Resource):
-        def get(self):
-            return colors_dao.get_colors(), 200
-            
-    api.add_resource(ColorList, f'{base_path}/colors')
+    def post(self):
+        db_firestone.clean_collection("COLLECTION_NAME")
+        return None,200
+        
+    api.add_resource(SecondResource, f'{base_path}/clean')
     """
 
     #Per fare debug in locale
@@ -318,10 +378,10 @@
     if __name__=='__main__':
         app.run(host="localhost", port=8080, debug=True)
     """
-    '''
+        '''
 
-    # 8. main.py (Entry point + Web App)
-    CONTENT_MAIN = '''from flask import Flask, render_template, request, redirect
+        # 8. main.py (Entry point + Web App)
+        CONTENT_MAIN = '''from flask import Flask, render_template, request, redirect
     from file_firestone import *
     from wtforms import DateField, EmailField, Form, RadioField, StringField, IntegerField, SubmitField, validators
     from time_utils import *
@@ -346,7 +406,7 @@
         email = EmailField('Email', [validators.Email()])
         tipo_scelta = RadioField('Cerca in:', choices=['dumarell', 'cantiere'], default='dumarell')
         submit = SubmitField('Salva Modifiche')
-    
+        
     """
     Definiamo quindi le funzioni che gestiscono i metodi dell'applicazione (GET, POST, PUT, DELETE). 
     Ogni funzione dichiara che tipo di metodi può gestire attraverso `methods=[LISTA_METODI]. 
@@ -355,7 +415,7 @@
     @app.route('/path', methods=['GET']) 
     def nome_della_funzione():
         return render_template("FILE.HTML", NOME_PARAMETRO="PARAMETRO")
-    
+        
     """Per CERCARE un elemento del database attraverso un FORM HTML"""
     @app.route('/cerca', methods=["GET", "POST"])
     def cerca_elementi():
@@ -419,124 +479,124 @@
     if __name__=='__main__':
         app.run(host="localhost", port=8080, debug=True)
     """
-    '''
-    CONTENT_FILE_FIRESTONE='''from google.cloud import firestore
-    from datetime import datetime
-    from time_utils import *
-    import json
+        '''
+        CONTENT_FILE_FIRESTONE='''from google.cloud import firestore
+        from datetime import datetime
+        from time_utils import *
+        import json
 
-    DB_NAME = None #MODIFICA
+        DB_NAME = None #MODIFICA
 
-    class FirestoreManager(object):
-        
-        def __init__(self):
-            # Inizializza il client. Se DB_NAME è None, usa il default.
-            if DB_NAME:
-                self.db = firestore.Client(database=DB_NAME)
-            else:
-                print("Attenzione: nessun database specificato, uso il default.")
+        class FirestoreManager(object):
+            
+            def __init__(self):
+                # Inizializza il client. Se DB_NAME è None, usa il default.
+                if DB_NAME:
+                    self.db = firestore.Client(database=DB_NAME)
+                else:
+                    print("Attenzione: nessun database specificato, uso il default.")
 
-        def add_element(self, collection_name, document_id, data_dict):
-            """
-            Salva o sovrascrive un documento.
-            collection_name: nome della collezione (es. 'letture' o 'bollette')
-            document_id: chiave primaria (es. '01-01-2023' o '01-2023')
-            data_dict: dizionario con i dati { 'valore': 100, 'costo': 50 }
-            """
-            ref = self.db.collection(collection_name).document(str(document_id))
-            ref.set(data_dict)
+            def add_element(self, collection_name, document_id, data_dict):
+                """
+                Salva o sovrascrive un documento.
+                collection_name: nome della collezione (es. 'letture' o 'bollette')
+                document_id: chiave primaria (es. '01-01-2023' o '01-2023')
+                data_dict: dizionario con i dati { 'valore': 100, 'costo': 50 }
+                """
+                ref = self.db.collection(collection_name).document(str(document_id))
+                ref.set(data_dict)
 
-        def get_element(self, collection_name, document_id):
-            """Recupera un singolo documento"""
-            doc_ref = self.db.collection(collection_name).document(str(document_id))
-            doc = doc_ref.get()
-            if doc.exists:
-                return doc.to_dict()
-            return None
+            def get_element(self, collection_name, document_id):
+                """Recupera un singolo documento"""
+                doc_ref = self.db.collection(collection_name).document(str(document_id))
+                doc = doc_ref.get()
+                if doc.exists:
+                    return doc.to_dict()
+                return None
 
-        def get_all_elements(self, collection_name):
-            """Ritorna una lista di dizionari contententi anche l'ID."""
-            collection_ref = self.db.collection(collection_name)
-            results = []
-            for doc in collection_ref.stream():
-                data = doc.to_dict()
-                data['id'] = doc.id  # Aggiungo l'ID al dizionario dati per comodità
-                results.append(data)
-            return results
+            def get_all_elements(self, collection_name):
+                """Ritorna una lista di dizionari contententi anche l'ID."""
+                collection_ref = self.db.collection(collection_name)
+                results = []
+                for doc in collection_ref.stream():
+                    data = doc.to_dict()
+                    data['id'] = doc.id  # Aggiungo l'ID al dizionario dati per comodità
+                    results.append(data)
+                return results
 
-        # --- PULIZIA DATABASE ---
+            # --- PULIZIA DATABASE ---
 
-        def clean_db(self):
-            """Cancella TUTTE le collezioni nel database"""
-            for collection in self.db.collections():
-                for doc in collection.stream():
+            def clean_db(self):
+                """Cancella TUTTE le collezioni nel database"""
+                for collection in self.db.collections():
+                    for doc in collection.stream():
+                        doc.reference.delete()
+
+            def clean_collection(self, collection_name):
+                """Svuota una singola collezione"""
+                docs = self.db.collection(collection_name).stream()
+                for doc in docs:
                     doc.reference.delete()
 
-        def clean_collection(self, collection_name):
-            """Svuota una singola collezione"""
-            docs = self.db.collection(collection_name).stream()
-            for doc in docs:
-                doc.reference.delete()
-
-        # --- POPOLAMENTO INIZIALE ---
-        def populate_from_json(self, filename, collection_target):
-            try:
-                with open(filename, 'r') as f:
-                    data_list = json.load(f)
-                    for item in data_list:
-                        # Assumiamo che nel JSON ci sia un campo 'id' da usare come chiave
-                        doc_id = item.pop('id', None) 
-                        if doc_id:
-                            self.add_element(collection_target, doc_id, item)
-            except FileNotFoundError:
-                print(f"File {filename} non trovato, salto il popolamento.")
+            # --- POPOLAMENTO INIZIALE ---
+            def populate_from_json(self, filename, collection_target):
+                try:
+                    with open(filename, 'r') as f:
+                        data_list = json.load(f)
+                        for item in data_list:
+                            # Assumiamo che nel JSON ci sia un campo 'id' da usare come chiave
+                            doc_id = item.pop('id', None) 
+                            if doc_id:
+                                self.add_element(collection_target, doc_id, item)
+                except FileNotFoundError:
+                    print(f"File {filename} non trovato, salto il popolamento.")
 
 
-    if __name__ == '__main__':
-        db = FirestoreManager()
-        db.populate_from_json('db.json',collection_target="COLLECTION_NAME")
-    '''
+        if __name__ == '__main__':
+            db = FirestoreManager()
+            db.populate_from_json('db.json',collection_target="COLLECTION_NAME")
+        '''
 
-    # ==============================================================================
-    # FUNZIONE DI GENERAZIONE
-    # ==============================================================================
+        # ==============================================================================
+        # FUNZIONE DI GENERAZIONE
+        # ==============================================================================
 
-    def init_project():
-        base_dir = os.getcwd()
-        print(f"--- Generazione struttura progetto in: {base_dir} ---")
+        def init_project():
+            base_dir = os.getcwd()
+            print(f"--- Generazione struttura progetto in: {base_dir} ---")
 
-        # 1. Creazione Cartelle
-        folders = ["templates"]
-        for folder in folders:
-            path = os.path.join(base_dir, folder)
-            if not os.path.exists(path):
-                os.makedirs(path)
-                print(f"[OK] Cartella '{folder}' creata.")
-        
-        # 2. Creazione File
-        files_to_create = {
-            "requirements.txt": CONTENT_REQUIREMENTS,
-            ".gcloudignore": CONTENT_GCLOUDIGNORE,
-            "app.yaml": CONTENT_APP_YAML,
-            "api.yaml": CONTENT_API_YAML,
-            "db.json": CONTENT_DB_JSON, 
-            "time_utils.py": CONTENT_TIME_UTILS,
-            "api.py": CONTENT_API_PY,
-            "main.py": CONTENT_MAIN,
-            "file_firestone.py": CONTENT_FILE_FIRESTONE
-        }
+            # 1. Creazione Cartelle
+            folders = ["templates"]
+            for folder in folders:
+                path = os.path.join(base_dir, folder)
+                if not os.path.exists(path):
+                    os.makedirs(path)
+                    print(f"[OK] Cartella '{folder}' creata.")
+            
+            # 2. Creazione File
+            files_to_create = {
+                "requirements.txt": CONTENT_REQUIREMENTS,
+                ".gcloudignore": CONTENT_GCLOUDIGNORE,
+                "app.yaml": CONTENT_APP_YAML,
+                "api.yaml": CONTENT_API_YAML,
+                "db.json": CONTENT_DB_JSON, 
+                "time_utils.py": CONTENT_TIME_UTILS,
+                "api.py": CONTENT_API_PY,
+                "main.py": CONTENT_MAIN,
+                "file_firestone.py": CONTENT_FILE_FIRESTONE
+            }
 
-        for filename, content in files_to_create.items():
-            path = os.path.join(base_dir, filename)
-            with open(path, "w", encoding="utf-8") as f:
-                f.write(content)
-            print(f"[OK] File '{filename}' creato.")
+            for filename, content in files_to_create.items():
+                path = os.path.join(base_dir, filename)
+                with open(path, "w", encoding="utf-8") as f:
+                    f.write(content)
+                print(f"[OK] File '{filename}' creato.")
 
-        print("\n--- SETUP COMPLETATO ---")
-        print("File creati correttamente, incluso db.json.")
+            print("\n--- SETUP COMPLETATO ---")
+            print("File creati correttamente, incluso db.json.")
 
-    if __name__ == "__main__":
-        init_project()
+        if __name__ == "__main__":
+            init_project()
     ```
 2. **Controlla quale profilo hai attivo su vsCode**
 
