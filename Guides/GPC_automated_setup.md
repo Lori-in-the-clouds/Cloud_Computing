@@ -557,46 +557,46 @@
             db.populate_from_json('db.json',collection_target="COLLECTION_NAME")
         '''
 
-        # ==============================================================================
-        # FUNZIONE DI GENERAZIONE
-        # ==============================================================================
+    # ==============================================================================
+    # FUNZIONE DI GENERAZIONE
+    # ==============================================================================
 
-        def init_project():
-            base_dir = os.getcwd()
-            print(f"--- Generazione struttura progetto in: {base_dir} ---")
+    def init_project():
+        base_dir = os.getcwd()
+        print(f"--- Generazione struttura progetto in: {base_dir} ---")
 
-            # 1. Creazione Cartelle
-            folders = ["templates"]
-            for folder in folders:
-                path = os.path.join(base_dir, folder)
-                if not os.path.exists(path):
-                    os.makedirs(path)
-                    print(f"[OK] Cartella '{folder}' creata.")
-            
-            # 2. Creazione File
-            files_to_create = {
-                "requirements.txt": CONTENT_REQUIREMENTS,
-                ".gcloudignore": CONTENT_GCLOUDIGNORE,
-                "app.yaml": CONTENT_APP_YAML,
-                "api.yaml": CONTENT_API_YAML,
-                "db.json": CONTENT_DB_JSON, 
-                "time_utils.py": CONTENT_TIME_UTILS,
-                "api.py": CONTENT_API_PY,
-                "main.py": CONTENT_MAIN,
-                "file_firestone.py": CONTENT_FILE_FIRESTONE
-            }
+        # 1. Creazione Cartelle
+        folders = ["templates"]
+        for folder in folders:
+            path = os.path.join(base_dir, folder)
+            if not os.path.exists(path):
+                os.makedirs(path)
+                print(f"[OK] Cartella '{folder}' creata.")
+        
+        # 2. Creazione File
+        files_to_create = {
+            "requirements.txt": CONTENT_REQUIREMENTS,
+            ".gcloudignore": CONTENT_GCLOUDIGNORE,
+            "app.yaml": CONTENT_APP_YAML,
+            "api.yaml": CONTENT_API_YAML,
+            "db.json": CONTENT_DB_JSON, 
+            "time_utils.py": CONTENT_TIME_UTILS,
+            "api.py": CONTENT_API_PY,
+            "main.py": CONTENT_MAIN,
+            "file_firestone.py": CONTENT_FILE_FIRESTONE
+        }
 
-            for filename, content in files_to_create.items():
-                path = os.path.join(base_dir, filename)
-                with open(path, "w", encoding="utf-8") as f:
-                    f.write(content)
-                print(f"[OK] File '{filename}' creato.")
+        for filename, content in files_to_create.items():
+            path = os.path.join(base_dir, filename)
+            with open(path, "w", encoding="utf-8") as f:
+                f.write(content)
+            print(f"[OK] File '{filename}' creato.")
 
-            print("\n--- SETUP COMPLETATO ---")
-            print("File creati correttamente, incluso db.json.")
+        print("\n--- SETUP COMPLETATO ---")
+        print("File creati correttamente, incluso db.json.")
 
-        if __name__ == "__main__":
-            init_project()
+    if __name__ == "__main__":
+        init_project()
     ```
 2. **Controlla quale profilo hai attivo su vsCode**
 
