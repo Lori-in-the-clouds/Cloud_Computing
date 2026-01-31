@@ -875,6 +875,17 @@ def from_string_to_month(m_str: str) -> datetime:
         return datetime.strptime(m_str, "%m-%Y")
     except (ValueError, TypeError):
         return None
+
+def from_string_to_date_full(d_str: str) -> datetime:
+    """Converte stringa 'gg-mm-YYYY HH:MM:SS' in oggetto datetime"""
+    try:
+        return datetime.strptime(d_str, "%d-%m-%Y %H:%M:%S")
+    except (ValueError, TypeError):
+        return None
+    
+def from_date_full_to_string(d: datetime) -> str:
+    """Converte oggetto datetime in stringa 'gg-mm-YYYY HH:MM:SS'"""
+    return d.strftime("%d-%m-%Y %H:%M:%S")
     
 # =============================================================================
 # SEZIONE 2: LISTE E RANGE DI DATE
