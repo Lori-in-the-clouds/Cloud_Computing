@@ -191,38 +191,38 @@ Dalla lettura del file **`dettagli_api.yaml`** fornito, estraiamo:
 
     db_firestone = FirestoreManager()
 
-        def validate_payload(data, required_fields):
-        """
-        Controlla se i campi richiesti esistono, se i tipi sono corretti
-        e se i valori sono validi.
-        """
-        for field, expected_type in required_fields.items():
-            val = data.get(field)
-            
-            # 1. Controllo esistenza
-            if val is None:
-                return False, f"Campo {field} mancante"
-            # 2. Controllo tipo (es. int, str, bool)
-            if not isinstance(val, expected_type):
-                return False, f"Campo {field} deve essere di tipo {expected_type.__name__}"
-            # 3. Controlli logici specifici (opzionale)
-            if expected_type == int and val < 0:
-                return False, f"Campo {field} non può essere negativo"
-            # 4. Controllo Email
-            if field == "email":
-                if not re.match(r"[^@]+@[^@]+\.[^@]+", val):
-                    return False, "Email non valida" 
-            # 5. Controllo Data
-            if field == "date":
-                try:
-                    datetime.strptime(val, "%d-%m-%Y")
-                except ValueError:
-                    return False, "Data non valida, formato richiesto gg-mm-YYYY"
-                            
-                    return True, None   
-            # 6. Stringhe non vuote
-            if expected_type == str and val.strip() == "":
-                return False, f"Campo {field} non può essere vuoto"
+    def validate_payload(data, required_fields):
+    """
+    Controlla se i campi richiesti esistono, se i tipi sono corretti
+    e se i valori sono validi.
+    """
+    for field, expected_type in required_fields.items():
+        val = data.get(field)
+        
+        # 1. Controllo esistenza
+        if val is None:
+            return False, f"Campo {field} mancante"
+        # 2. Controllo tipo (es. int, str, bool)
+        if not isinstance(val, expected_type):
+            return False, f"Campo {field} deve essere di tipo {expected_type.__name__}"
+        # 3. Controlli logici specifici (opzionale)
+        if expected_type == int and val < 0:
+            return False, f"Campo {field} non può essere negativo"
+        # 4. Controllo Email
+        if field == "email":
+            if not re.match(r"[^@]+@[^@]+\.[^@]+", val):
+                return False, "Email non valida" 
+        # 5. Controllo Data
+        if field == "date":
+            try:
+                datetime.strptime(val, "%d-%m-%Y")
+            except ValueError:
+                return False, "Data non valida, formato richiesto gg-mm-YYYY"
+                        
+                return True, None   
+        # 6. Stringhe non vuote
+        if expected_type == str and val.strip() == "":
+            return False, f"Campo {field} non può essere vuoto"
 
     class FirstResource(Resource):
         
