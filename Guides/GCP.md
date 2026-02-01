@@ -981,6 +981,21 @@ def overlap(t1_str: str, durata_1: int, t2_str: str, durata_2: int) -> bool:
     # Logica di sovrapposizione standard
     return max(start1, start2) < min(end1, end2)
 
+from datetime import datetime
+from dateutil.relativedelta import relativedelta
+
+def aggiungi_un_mese(data_input) -> str:
+    # Se la data è una stringa, la convertiamo prima in oggetto datetime
+    if isinstance(data_input, str):
+        data_obj = datetime.strptime(data_input, "%Y-%m-%d")
+    else:
+        data_obj = data_input
+
+    # Aggiunge esattamente un mese solare
+    nuova_data = data_obj + relativedelta(months=1)
+    
+    return from_date_to_string(nuova_data)
+
 # =============================================================================
 # SEZIONE 4: ORDINAMENTO
 # =============================================================================
@@ -1008,6 +1023,16 @@ def ordina_ore_minuti(lista_orari: list[str], crescente: bool = True) -> list[st
         key=lambda t: datetime.strptime(t, "%H:%M"),
         reverse=not crescente
     )
+
+def ordina_lista_di_dizionari_per_data(l, campo_con_data, formato_data="%Y-%m-%d %H:%M:%S",reverse=False):
+    """Ordina una lista di dizionari in base a una data (stringa o oggetto datetime)."""
+    # Usiamo sorted con una chiave (key) personalizzata
+    lista_sorted = sorted(
+        l, 
+        key=lambda x: datetime.strptime(x[campo_con_data], formato_data),
+        reverse=reverse
+    )
+    return lista_sorted
 
 # =============================================================================
 # SEZIONE 5: UTILITY VARIE E FORMATTAZIONE
@@ -1081,3 +1106,16 @@ data_parziale = data_parziale.replace(year=data_parziale.year + 1,month= 1)
     gcloud projects delete ${PROJECT_ID}
     ```
 ---
+# 10. Cose utiili
+* **Controllo Data:**
+
+    ```python
+    import email_validator
+
+    def validazione_email(email):
+        try:
+            email_validator.validate_email(email)
+            return True
+        except email_validator.EmailNotValidError:
+            return False
+    ```
