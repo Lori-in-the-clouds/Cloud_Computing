@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="it">
+    <head>
+        <h1>Chirps</h1>
+        <meta charset="UTF-8">
+        <link rel="stylesheet" href="/static/color.css">
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"> 
+    </head>
+
+    <body>
+
+        <form method="POST" name="mform">
+            Inserisci il messaggio:
+            <div>{{mform.message.label}}: {{mform.message}}</div>
+            <button>{{mform.submit}}</button>
+        </form>
+        {% if ack == True %}
+            <div>Messaggio Inviato Correttamente</div>
+        {% endif %}
+  
+        {% if corretto == False %}
+            <div>Messaggio Troppo Lungo</div>
+        {% endif %}
+
+
+        <form method="POST" name="rform">
+            Cerca messaggi con hastag:
+            <div>{{rform.hashtag.label}}: {{rform.hashtag}}</div>
+            <button>{{rform.submit}}</button>
+        </form>
+
+        {% if error_tag == True %}
+            <div>L'hashtag deve incominciare con un #</div>
+        {% endif %}
+
+
+            
+    
+    </body>
+</html>
