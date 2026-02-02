@@ -1226,7 +1226,7 @@ data_parziale = data_parziale.replace(year=data_parziale.year + 1,month= 1)
         except email_validator.EmailNotValidError:
             return False
     ```
-* **Generazine e Controllo UID:**
+* **Generazione e Controllo UID:**
   
      ```python
     import uuid
