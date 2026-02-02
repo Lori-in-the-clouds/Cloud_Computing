@@ -1214,7 +1214,7 @@ data_parziale = data_parziale.replace(year=data_parziale.year + 1,month= 1)
     ```
 ---
 # 10. Cose utiili
-* **Controllo Data:**
+* **Controllo Email:**
 
     ```python
     import email_validator
@@ -1226,3 +1226,21 @@ data_parziale = data_parziale.replace(year=data_parziale.year + 1,month= 1)
         except email_validator.EmailNotValidError:
             return False
     ```
+* **Generazine e Controllo UID:**
+  
+     ```python
+    import uuid
+
+    def is_valid_uuid(uuid_to_test, version=4):
+        """
+        Verifica se una stringa è un UUID valido.
+        """
+        try:
+            # Tenta di creare un oggetto UUID; se fallisce, solleva ValueError
+            uuid_obj = uuid.UUID(uuid_to_test, version=version)
+        except ValueError:
+            return False
+        return str(uuid_obj) == uuid_to_test
+    
+    #nuovo_id = uuid.uuid4()
+    ```   
