@@ -746,6 +746,7 @@ Le function sono delle Action che vengono eseguite in risposta al verificarsi 
        4. **Testing in locale:**
           * Togliamo dalla funzione il parametro `context`
           * Utilizziamo nel main un `fake_event`:
+ 
             ```json
             fake_event = {
                 "value": {
@@ -760,6 +761,7 @@ Le function sono delle Action che vengono eseguite in risposta al verificarsi 
             }
             ```  
         * Chiamiamo la funzione inseredno il `fake_event`:
+       
             ```bash
             python3 update_db(fake_event)
             ```
