@@ -77,7 +77,235 @@
 
     # 6. time_utils.py (Dalla Sezione 5 del README_GCP.md)
     CONTENT_TIME_UTILS = '''
+    from datetime import datetime, time, timedelta
+    from dateutil.relativedelta import relativedelta
+    import calendar
+
+    # =============================================================================
+    # SEZIONE 1: CONVERSIONI BASE (Stringa <-> Oggetto)
+    # =============================================================================
+
+    def from_string_do_date(d_str: str, pattern = "%d-%m-%Y") -> datetime:
+        """
+        Converte una stringa in un oggetto datetime o time basandosi sul pattern.
+        Esempi pattern: "%d-%m-%Y", "%H:%M", "%Y-%m-%d %H:%M:%S"
+        """
+        if not value_str:
+            return None
+        try:
+            dt = datetime.strptime(value_str, pattern)
+            # Se il pattern contiene solo ore e minuti, restituiamo un oggetto .time()
+            if "%H" in pattern and "%d" not in pattern:
+                return dt.time()
+            return dt
+        except (ValueError, TypeError):
+            return None
+
+    def from_date_to_string(d: datetime, pattern = "%d-%m-%Y") -> str
+        """
+        Converte un oggetto (datetime o time) in stringa basandosi sul pattern.
+        """
+        if obj is None:
+            return None
+        return obj.strftime(pattern)
     
+    # =============================================================================
+    # SEZIONE 2: LISTE E RANGE DI DATE
+    # =============================================================================
+
+    def get_past_dates(days: int, exclude_today: bool = False) -> list[str]:
+        """
+        Restituisce una lista di date (stringhe) passate.
+        :param days: numero di giorni da recuperare
+        :param exclude_today: se True, parte da ieri
+        """
+        today = datetime.today()
+        start = 1 if exclude_today else 0
+        return [
+            (today - timedelta(days=i)).strftime("%d-%m-%Y")
+            for i in range(start, start + days)
+        ]
+
+    def giorni_della_settimana(data: datetime = datetime.today()) -> list[str]:
+        """Restituisce la lista dei 7 giorni (stringhe) della settimana della data fornita"""
+        inizio_settimana = data - timedelta(days=data.weekday()) # Lunedì
+        return [
+            (inizio_settimana + timedelta(days=i)).strftime("%d-%m-%Y")
+            for i in range(7)
+        ]
+
+    def giorni_del_mese(data: datetime = datetime.today()) -> list[str]:
+        """Restituisce la lista di tutti i giorni (stringhe) del mese della data fornita"""
+        num_giorni = calendar.monthrange(data.year, data.month)[1]
+        inizio_mese = data.replace(day=1)
+        return [
+            (inizio_mese + timedelta(days=i)).strftime("%d-%m-%Y")
+            for i in range(num_giorni)
+        ]
+
+    def primo_e_ultimo_giorno_del_mese(data: datetime = datetime.today()) -> tuple[str, str]:
+        """Restituisce una tupla (primo_giorno, ultimo_giorno) come stringhe"""
+        giorni = giorni_del_mese(data)
+        return giorni[0], giorni[-1]
+
+    # =============================================================================
+    # SEZIONE 3: OPERAZIONI MATEMATICHE E LOGICA
+    # =============================================================================
+
+    def somma_giorni(data_str: str, giorni: int) -> str:
+        """Aggiunge n giorni a una data stringa"""
+        d = from_string_to_date(data_str)
+        if d:
+            return from_date_to_string(d + timedelta(days=giorni))
+        return data_str
+
+    def somma_mesi(data_str: str, mesi: int) -> str:
+        """Aggiunge n mesi a una data stringa (richiede dateutil)"""
+        d = from_string_to_date(data_str)
+        if d:
+            nuovo = d + relativedelta(months=mesi)
+            return from_date_to_string(nuovo)
+        return data_str
+
+    def somma_ore_minuti(orario_str: str, ore: int = 0, minuti: int = 0) -> str:
+        """Aggiunge ore e minuti a un orario stringa HH:MM"""
+        t_obj = datetime.strptime(orario_str, "%H:%M") # Uso datetime fittizio
+        nuovo = t_obj + timedelta(hours=ore, minutes=minuti)
+        return nuovo.strftime("%H:%M")
+
+    def calculate_end_time(start_time_str: str, duration_minutes: int) -> str:
+        """
+        Calcola l'orario di fine.
+        Gestisce automaticamente il cambio di giornata (es. 23:00 + 120min -> 01:00).
+        """
+        try:
+            # Trucco: Creiamo un datetime fittizio con la data di oggi e l'ora data
+            dt_start = datetime.strptime(start_time_str, "%H:%M")
+            dt_end = dt_start + timedelta(minutes=int(duration_minutes))
+            return dt_end.strftime("%H:%M")
+        except (ValueError, TypeError):
+            return None
+
+    def overlap(t1_str: str, durata_1: int, t2_str: str, durata_2: int) -> bool:
+        """Verifica se due intervalli temporali si sovrappongono"""
+        def to_minutes(hhmm: str) -> int:
+            try:
+                h, m = map(int, hhmm.split(":"))
+                return h * 60 + m
+            except: return 0
+        
+        start1 = to_minutes(t1_str)
+        end1 = start1 + int(durata_1)
+        
+        start2 = to_minutes(t2_str)
+        end2 = start2 + int(durata_2)
+        
+        # Logica di sovrapposizione standard
+        return max(start1, start2) < min(end1, end2)
+
+    from datetime import datetime
+    from dateutil.relativedelta import relativedelta
+
+    def aggiungi_un_mese(data_input) -> str:
+        # Se la data è una stringa, la convertiamo prima in oggetto datetime
+        if isinstance(data_input, str):
+            data_obj = datetime.strptime(data_input, "%Y-%m-%d")
+        else:
+            data_obj = data_input
+
+        # Aggiunge esattamente un mese solare
+        nuova_data = data_obj + relativedelta(months=1)
+        
+        return from_date_to_string(nuova_data)
+
+    # =============================================================================
+    # SEZIONE 4: ORDINAMENTO
+    # =============================================================================
+
+    def ordina_date(lista_date: list[str], crescente: bool = True) -> list[str]:
+        """Ordina lista di date formato 'gg-mm-YYYY'"""
+        return sorted(
+            lista_date,
+            key=lambda d: datetime.strptime(d, "%d-%m-%Y"),
+            reverse=not crescente
+        )
+
+    def ordina_mesi(lista_mesi: list[str], crescente: bool = True) -> list[str]:
+        """Ordina lista di mesi formato 'mm-YYYY'"""
+        return sorted(
+            lista_mesi,
+            key=lambda d: datetime.strptime(d, "%m-%Y"),
+            reverse=not crescente
+        )
+
+    def ordina_ore_minuti(lista_orari: list[str], crescente: bool = True) -> list[str]:
+        """Ordina lista di orari formato 'HH:MM'"""
+        return sorted(
+            lista_orari,
+            key=lambda t: datetime.strptime(t, "%H:%M"),
+            reverse=not crescente
+        )
+
+    def ordina_lista_di_dizionari_per_data(l, campo_con_data, formato_data="%Y-%m-%d %H:%M:%S",reverse=False):
+        """Ordina una lista di dizionari in base a una data (stringa o oggetto datetime)."""
+        # Usiamo sorted con una chiave (key) personalizzata
+        lista_sorted = sorted(
+            l, 
+            key=lambda x: datetime.strptime(x[campo_con_data], formato_data),
+            reverse=reverse
+        )
+        return lista_sorted
+
+    # =============================================================================
+    # SEZIONE 5: UTILITY VARIE E FORMATTAZIONE
+    # =============================================================================
+
+    def giorno_della_settimana_it(data_str: str) -> str:
+        """Restituisce il nome del giorno in italiano (es. 'Lunedì')"""
+        data = from_string_to_date(data_str)
+        if not data: return ""
+        giorni = ["Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato", "Domenica"]
+        return giorni[data.weekday()]
+
+    def mese_it_month(month_str: str) -> str:
+        """Restituisce il nome del mese in italiano (es. 'Gennaio')"""
+        data = from_string_to_month(month_str)
+        if not data:
+            return ""
+
+        mesi = [
+            "Gennaio", "Febbraio", "Marzo", "Aprile",
+            "Maggio", "Giugno", "Luglio", "Agosto",
+            "Settembre", "Ottobre", "Novembre", "Dicembre"
+        ]
+        return mesi[data.month - 1]
+
+    def mese_it_date(date_str: str) -> str:
+        """Restituisce il nome del mese in italiano (es. 'Gennaio')"""
+        data = from_string_to_date(date_str)
+        if not data:
+            return ""
+
+        mesi = [
+            "Gennaio", "Febbraio", "Marzo", "Aprile",
+            "Maggio", "Giugno", "Luglio", "Agosto",
+            "Settembre", "Ottobre", "Novembre", "Dicembre"
+        ]
+
+        return mesi[data.month - 1]
+
+    def da_ddmmyyyy_a_yyyymmdd(data_str: str) -> str:
+        """Converte '10-05-2025' -> '2025-05-10' (Utile per input HTML date)"""
+        d = from_string_to_date(data_str)
+        return d.strftime("%Y-%m-%d") if d else ""
+
+    def da_yyyymmdd_a_ddmmyyyy(data_str: str) -> str:
+        """Converte '2025-05-10' -> '10-05-2025' (Da input HTML a formato interno)"""
+        try:
+            d = datetime.strptime(data_str, "%Y-%m-%d")
+            return d.strftime("%d-%m-%Y")
+        except:
+            return ""
     '''
 
     # 7. api.py (Blueprint e Risorse RESTful)
@@ -97,36 +325,22 @@
 
     def validate_payload(data, required_fields):
         """
-        Controlla se i campi richiesti esistono, se i tipi sono corretti
-        e se i valori sono validi.
+        Controlla se i campi richiesti esistono, se i tipi sono corretti e se i valori sono validi.
         """
         for field, expected_type in required_fields.items():
             val = data.get(field)
-            
             # 1. Controllo esistenza
             if val is None:
                 return False, f"Campo {field} mancante"
             # 2. Controllo tipo (es. int, str, bool)
             if not isinstance(val, expected_type):
                 return False, f"Campo {field} deve essere di tipo {expected_type.__name__}"
-            # 3. Controlli logici specifici (opzionale)
-            if expected_type == int and val < 0:
-                return False, f"Campo {field} non può essere negativo"
-            # 4. Controllo Email
+            # 3. Controllo Email
             if field == "email":
                 if not re.match(r"[^@]+@[^@]+\.[^@]+", val):
                     return False, "Email non valida" 
-            # 5. Controllo Data
-            if field == "date":
-                try:
-                    datetime.strptime(val, "%d-%m-%Y")
-                except ValueError:
-                    return False, "Data non valida, formato richiesto gg-mm-YYYY"
-                            
-                    return True, None   
-            # 6. Stringhe non vuote
-            if expected_type == str and val.strip() == "":
-                return False, f"Campo {field} non può essere vuoto"
+            return True
+
 
     class FirstResource(Resource):
         
@@ -146,31 +360,28 @@
             request_info =request.json
             #PARAM = request_info.get("PARAM")
             return None,[200,400]
-            
-            
+                
     #Per ciascuna classe eseguiamo il collegamento con il path corretto all'esterno della classe indicando il nome del parametro (se presente nel path).
     api.add_resource(FirstResource, f'{base_path}/colors/<string:colorName>')
-
 
     #Ecco un esempio in cui il path possiede solamente un metodo e non è presente alcun parametro:
     """
     class SecondResource(Resource):
-    def post(self):
-        db_firestone.clean_collection("COLLECTION_NAME")
-        return None,200
+        def post(self):
+            db_firestone.clean_collection("COLLECTION_NAME")
+            return None,200
         
     api.add_resource(SecondResource, f'{base_path}/clean')
     """
 
     #Per fare debug in locale
-    """
     if __name__=='__main__':
         app.run(host="localhost", port=8080, debug=True)
-    """
-        '''
+    '''
 
     # 8. main.py (Entry point + Web App)
-    CONTENT_MAIN = '''from flask import Flask, render_template, request, redirect
+    CONTENT_MAIN = '''
+    from flask import Flask, render_template, request, redirect
     from file_firestone import *
     from wtforms import DateField, EmailField, Form, RadioField, StringField, IntegerField, SubmitField, validators
     from time_utils import *
@@ -203,7 +414,7 @@
     """
     @app.route('/path', methods=['GET']) 
     def nome_della_funzione():
-        return render_template("FILE.HTML", NOME_PARAMETRO="PARAMETRO")
+        return render_template("FILE.html", NOME_PARAMETRO="PARAMETRO")
         
     """Per CERCARE un elemento del database attraverso un FORM HTML"""
     @app.route('/cerca', methods=["GET", "POST"])
@@ -264,11 +475,9 @@
         return render_template("FILE.html", cform=cform, id_elemento=ID_PARAM)
 
     #Per fare debug in locale
-    """
     if __name__=='__main__':
         app.run(host="localhost", port=8080, debug=True)
-    """
-        '''
+    '''
     CONTENT_FILE_FIRESTONE='''from google.cloud import firestore
     from datetime import datetime
     from time_utils import *
