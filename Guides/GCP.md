@@ -772,15 +772,15 @@ Analizziamo due casi:
   1.  Settiamo le variabili di ambiente (devono essere settate in tutti i terminali che utilizziamo):
    
         ```bash
+        export PROJECT_ID="PROJECT_NAME"
         export TOPIC_NAME="TOPIC_NAME"
         export SUBSCRIPTION_NAME="SUBSCRIPTION_NAME"
-        export PROJECT_ID="PROJECT_NAME"
         ````
         Per controllare tutte le variabili:
         ```bash
+        echo $PROJECT_ID
         echo $TOPIC_NAME
         echo $SUBSCRIPTION_NAME
-        echo $PROJECT_ID
         ````
    2. Creiamo il topic e la subscription su gcloud:
         ```bash
@@ -856,7 +856,7 @@ Analizziamo due casi:
   3. In un altro terminale fai partire il sub
 * **Caso in cui dobbbiamo definire dinamicamente i nomi dei Topic e delle Subscription:**
 
-  1. **Template `publisher`:** questo codice va inserito dove nascono i dati (es. `api.py`). La funzione chiave è publish_message: gestisce da sola la creazione del topic se non esiste e l'invio del messaggio.
+  1. **Template `publisher`:** questo codice va inserito dove nascono i dati (es. `api.py`). La funzione chiave è `publish_message`: gestisce da sola la creazione del topic se non esiste e l'invio del messaggio.
         ```python
         import os
         from google.cloud import pubsub_v1
@@ -955,8 +955,8 @@ Analizziamo due casi:
                 subscriber.delete_subscription(request={"subscription": subscription_path})
                 print("Fatto. Ciao!")
         ```
-  3. In un terminale far partire il pub (va bene anche in locale)
-  4. In un altro terminale fai partire il sub
+  3. In un terminale far partire il pub (va bene anche in locale).
+  4. In un altro terminale fai partire il sub.
 ---
 # 8. File `time_utils.py`
 ```python
