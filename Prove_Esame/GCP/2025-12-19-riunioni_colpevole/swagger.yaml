@@ -1,0 +1,291 @@
+swagger: "2.0"
+
+info:
+  version: "1.0"
+  title: "Sala Riunioni 42"
+  description: "API per la gestione delle prenotazioni della sala riunioni dell'azienda 'Procrastination Solutions Inc'"
+
+host: "[YOUR_PROJECT_ID].appspot.com"
+basePath: "/api/v1"
+
+schemes:
+  - https
+
+paths:
+  /panic:
+    post:
+      description: "Cancella tutte le prenotazioni memorizzate nel database"
+      operationId: "cleanDatabase"
+      responses:
+        200:
+          description: "Database pulito"
+
+  /room42/{data}:
+    parameters:
+      - name: data
+        in: path
+        required: true
+        description: "Data della prenotazione in formato DD-MM-YYYY"
+        type: string
+        format: date
+    post:
+      description: "Crea la prenotazione di una riunione per una certa data. Fallisce se lo stesso colpevole ha già una prenotazione per quella data."
+      operationId: "CreatePrenotazione"
+      consumes:
+        - application/json
+      parameters:
+        - in: body
+          name: Prenotazione
+          required: true
+          description: "Dati della prenotazione"
+          schema:
+            type: object
+            required:
+              - colpevole
+              - vittime
+              - durata
+              - orario_inizio 
+            properties:
+              colpevole:
+                type: string
+                description: "Nome del dipendente che organizza la riunione"
+              vittime:
+                type: array
+                description: "Lista dei partecipanti (nomi dei colleghi)"
+                items:
+                  type: string
+                maxItems: 20
+              durata:
+                type: number
+                minimum: 0.5
+                maximum: 8
+                multipleOf: 0.5
+                description: "Durata della riunione in ore (solo multipli di 0.5)"
+              orario_inizio:
+                type: string
+                pattern: '^([0-1][0-9]|2[0-3]):[0-5][0-9]$'
+                description: "Orario di inizio in formato HH:MM (24 ore), tra 08:00 e 19:00"
+      responses:
+        201:
+          description: "Prenotazione creata"
+          schema:
+            $ref: "#/definitions/Prenotazione"
+        400:
+          description: "Richiesta non valida (dati mancanti, data errata, troppi partecipanti, durata non valida, o colpevole già presente per quella data)"
+        409:
+          description: "Conflitto nella richiesta (duplicazione)"
+        422:
+          description: "Conflitto di orario (sovrapposizione, inizio non valido o termine dopo le 20:00)"
+    put:
+      description: "Aggiorna una prenotazione esistente per un colpevole in una certa data"
+      operationId: "UpdatePrenotazione"
+      consumes:
+        - application/json
+      parameters:
+        - in: body
+          name: Prenotazione
+          required: true
+          description: "Dati della prenotazione"
+          schema:
+            type: object
+            required:
+              - colpevole
+              - vittime
+              - durata
+              - orario_inizio
+            properties:
+              colpevole:
+                type: string
+                description: "Nome del dipendente che organizza la riunione"
+              vittime:
+                type: array
+                description: "Lista dei partecipanti (nomi dei colleghi)"
+                items:
+                  type: string
+                maxItems: 20
+              durata:
+                type: number
+                minimum: 0.5
+                maximum: 8
+                multipleOf: 0.5
+                description: "Durata della riunione in ore (solo multipli di 0.5)"
+              orario_inizio:  # AGGIUNTO
+                type: string
+                pattern: '^([0-1][0-9]|2[0-3]):[0-5][0-9]$'
+                description: "Orario di inizio in formato HH:MM (24 ore), tra 08:00 e 19:00"
+      responses:
+        200:
+          description: "Prenotazione aggiornata"
+          schema:
+            $ref: "#/definitions/Prenotazione"
+        400:
+          description: "Richiesta non valida (dati mancanti o data errata)"
+        404:
+          description: "Prenotazione per data e colpevole specificati non trovata"
+        422:
+          description: "Conflitto di orario (sovrapposizione, inizio non valido o termine dopo le 20:00)"
+
+    get:
+      description: "Restituisce il totale delle ore di lavoro sprecate e il dettaglio delle riunioni in una certa data"
+      operationId: "GetRiepilogoGiorno"
+      responses:
+        200:
+          description: "Riepilogo della giornata"
+          schema:
+            $ref: "#/definitions/RiepilogoGiorno"
+        400:
+          description: "Richiesta non valida"
+
+  /stats/slackers/{mese}:
+    parameters:
+      - name: mese
+        in: path
+        required: true
+        description: "Mese in formato MM-YYYY"
+        type: string
+    get:
+      description: "Restituisce il dipendente più improduttivo del mese (più ore passate in riunioni)"
+      operationId: "GetSlackerMese"
+      responses:
+        200:
+          description: "Dipendente più improduttivo del mese"
+          schema:
+            $ref: "#/definitions/SlackerMese"
+        400:
+          description: "Richiesta non valida"
+        404:
+          description: "Nessun dato disponibile per il mese specificato"
+
+  /stats/saboteurs/{mese}:
+    parameters:
+      - name: mese
+        in: path
+        required: true
+        description: "Mese in formato MM-YYYY"
+        type: string
+    get:
+      description: "Restituisce il manager sabotatore del mese (più ore di riunioni organizzate)"
+      operationId: "GetSaboteurMese"
+      responses:
+        200:
+          description: "Manager sabotatore del mese"
+          schema:
+            $ref: "#/definitions/SaboteurMese"
+        400:
+          description: "Richiesta non valida"
+        404:
+          description: "Nessun dato disponibile per il mese specificato"
+
+definitions:
+  Prenotazione:
+    type: object
+    required:
+      - data
+      - colpevole
+      - vittime
+      - durata
+    properties:
+      data:
+        type: string
+        description: "Data della prenotazione in formato DD-MM-YYYY"
+      colpevole:
+        type: string
+        description: "Nome del dipendente che organizza la riunione"
+      vittime:
+        type: array
+        description: "Lista dei partecipanti (nomi dei colleghi)"
+        items:
+          type: string
+      durata:
+        type: number
+        description: "Durata della riunione in ore"
+      orario_inizio:
+        type: string
+        description: "Orario di inizio in formato HH:MM"
+
+  RiunioneGiorno:
+    type: object
+    required:
+      - colpevole
+      - vittime
+      - durata
+    properties:
+      colpevole:
+        type: string
+        description: "Nome del dipendente che organizza la riunione"
+      vittime:
+        type: array
+        description: "Lista dei partecipanti"
+        items:
+          type: string
+      durata:
+        type: number
+        description: "Durata della riunione in ore"
+      orario_inizio:
+        type: string
+        description: "Orario di inizio in formato HH:MM"
+
+  RiepilogoGiorno:
+    type: object
+    required:
+      - data
+      - totale_ore
+      - riunioni
+    properties:
+      data:
+        type: string
+        description: "Data delle riunioni in formato DD-MM-YYYY"
+      totale_ore:
+        type: number
+        description: "Totale ore di lavoro sprecate per la giornata"
+      dannato_del_giorno:
+        type: string
+        description: "Colpevole della riunione più lunga della giornata"
+      riunioni:
+        type: array
+        description: "Lista delle riunioni con colpevoli e vittime"
+        items:
+          $ref: "#/definitions/RiunioneGiorno"
+
+  SlackerMese:
+    type: object
+    required:
+      - mese
+      - dipendente
+      - ore_riunioni
+    properties:
+      mese:
+        type: string
+        description: "Mese in formato MM-YYYY"
+      dipendente:
+        type: string
+        description: "Nome del dipendente più improduttivo"
+      ore_riunioni:
+        type: number
+        description: "Ore totali passate in riunioni nel mese"
+      efficienza:
+        type: number
+        description: "ore_riunioni / 8hgiorno x numero_giorni_lavorativi"
+
+  SaboteurMese:
+    type: object
+    required:
+      - mese
+      - manager
+      - riunioni_organizzate
+    properties:
+      mese:
+        type: string
+        description: "Mese in formato MM-YYYY"
+      manager:
+        type: string
+        description: "Nome del manager sabotatore"
+      riunioni_organizzate:
+        type: integer
+        description: "Numero di riunioni organizzate nel mese"
+      vittime_totali:
+        type: integer
+        description: "Numero totale di partecipanti a tutte le riunioni organizzate"
+      indice_sabotaggio:
+        type: number
+        description: "Somma per ogni riunione del numero ore ruiunione x numero vittime totali"

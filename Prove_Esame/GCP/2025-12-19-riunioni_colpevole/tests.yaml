@@ -1,0 +1,280 @@
+- api_name: room42/{data}
+  tests:
+    - title: PANIC - Clean database
+      url: /api/v1/panic
+      method: POST
+      exp_rc: 200
+
+    # Date non valide per GET
+    - title: GET#01 - Data malformata
+      url: /api/v1/room42/-11-2025
+      method: GET
+      exp_rc: 400
+
+    - title: GET#02 - Data non valida
+      url: /api/v1/room42/ababa
+      method: GET
+      exp_rc: 400
+
+    - title: GET#03 - Data impossibile
+      url: /api/v1/room42/32-13-2025
+      method: GET
+      exp_rc: 400
+
+    # Giorno valido ma senza prenotazioni
+    - title: GET#04 - Giorno senza riunioni
+      url: /api/v1/room42/1-10-2025
+      method: GET
+      exp_rc: 200
+      exp_body: '{"data": "1-10-2025", "totale_ore": 0.0, "riunioni": []}'
+
+    # POST con body mancante/errato
+    - title: POST#01 - Body vuoto
+      url: /api/v1/room42/1-10-2025
+      method: POST
+      body: '{}'
+      exp_rc: 400
+
+    - title: POST#02 - Mancano vittime, durata e orario_inizio
+      url: /api/v1/room42/1-10-2025
+      method: POST
+      body: '{"colpevole": "Mario Rossi"}'
+      exp_rc: 400
+
+    - title: POST#03 - Mancano colpevole, durata e orario_inizio
+      url: /api/v1/room42/1-10-2025
+      method: POST
+      body: '{"vittime": ["Anna", "Luca"]}'
+      exp_rc: 400
+
+    - title: POST#04 - Durata non valida (troppo piccola)
+      url: /api/v1/room42/1-10-2025
+      method: POST
+      body: '{"colpevole": "Mario Rossi", "vittime": ["Anna", "Luca"], "durata": 0.2, "orario_inizio": "09:00"}'
+      exp_rc: 400
+
+    - title: POST#05 - Durata non multipla di 0.5
+      url: /api/v1/room42/1-10-2025
+      method: POST
+      body: '{"colpevole": "Mario Rossi", "vittime": ["Anna", "Luca"], "durata": 1.25, "orario_inizio": "09:00"}'
+      exp_rc: 400
+
+    - title: POST#06 - Troppe vittime (>19)
+      url: /api/v1/room42/1-10-2025
+      method: POST
+      body: '{"colpevole": "Mario Rossi", "vittime": ["Vittima1", "Vittima2", "Vittima3", "Vittima4", "Vittima5", "Vittima6", "Vittima7", "Vittima8", "Vittima9", "Vittima10", "Vittima11", "Vittima12", "Vittima13", "Vittima14", "Vittima15", "Vittima16", "Vittima17", "Vittima18", "Vittima19", "Vittima20", "Vittima21"], "durata": 1.0, "orario_inizio": "09:00"}'
+      exp_rc: 400
+
+    # Test orario_inizio non valido
+    - title: POST#06b - Orario_inizio mancante
+      url: /api/v1/room42/1-10-2025
+      method: POST
+      body: '{"colpevole": "Mario Rossi", "vittime": ["Anna", "Luca"], "durata": 1.0}'
+      exp_rc: 400
+
+    - title: POST#06d - Orario_inizio troppo presto (prima delle 08:00)
+      url: /api/v1/room42/1-10-2025
+      method: POST
+      body: '{"colpevole": "Mario Rossi", "vittime": ["Anna", "Luca"], "durata": 1.0, "orario_inizio": "07:30"}'
+      exp_rc: 422
+
+    - title: POST#06e - Orario_inizio troppo tardi (dopo le 19:00)
+      url: /api/v1/room42/1-10-2025
+      method: POST
+      body: '{"colpevole": "Mario Rossi", "vittime": ["Anna", "Luca"], "durata": 1.0, "orario_inizio": "19:30"}'
+      exp_rc: 422
+
+    # Inserimento corretto
+    - title: POST#07 - Inserimento valido (mattina)
+      url: /api/v1/room42/1-10-2025
+      method: POST
+      body: '{"colpevole": "Mario Rossi", "vittime": ["Anna", "Luca", "Giulia"], "durata": 2.0, "orario_inizio": "09:00"}'
+      exp_rc: 201
+      exp_body: '{"data": "1-10-2025", "colpevole": "Mario Rossi", "vittime": ["Anna", "Luca", "Giulia"], "durata": 2.0, "orario_inizio": "09:00"}'
+
+    # Duplicato stesso colpevole stesso giorno -> conflitto
+   
+    - title: POST#08 - Corretto
+      url: /api/v1/room42/1-10-2025
+      method: POST
+      body: '{"colpevole": "Mario Rossi", "vittime": ["Marco", "Sara"], "durata": 1.5, "orario_inizio": "11:00"}'
+      exp_rc: 201
+
+    # Riepilogo dopo l'inserimento
+    - title: GET#05 - Riepilogo dopo prima riunione
+      url: /api/v1/room42/1-10-2025
+      method: GET
+      exp_rc: 200
+      exp_body: '{"data": "1-10-2025", "totale_ore": 2.0, "riunioni": [{"colpevole": "Mario Rossi", "vittime": ["Anna", "Luca", "Giulia"], "durata": 2.0, "orario_inizio": "09:00", "orario_fine": "11:00"}]}'
+
+    # Aggiornamento prenotazione esistente (PUT)
+    - title: PUT#01 - Aggiornamento riunione
+      url: /api/v1/room42/1-10-2025
+      method: PUT
+      body: '{"colpevole": "Mario Rossi", "vittime": ["Anna", "Luca", "Giulia", "Marco"], "durata": 2.5, "orario_inizio": "09:00"}'
+      exp_rc: 200
+      exp_body: '{"data": "1-10-2025", "colpevole": "Mario Rossi", "vittime": ["Anna", "Luca", "Giulia", "Marco"], "durata": 2.5, "orario_inizio": "09:00"}'
+
+    # Riepilogo dopo l'update
+    - title: GET#06 - Riepilogo dopo update
+      url: /api/v1/room42/1-10-2025
+      method: GET
+      exp_rc: 200
+      exp_body: '{"data": "1-10-2025", "totale_ore": 2.5, "riunioni": [{"colpevole": "Mario Rossi", "vittime": ["Anna", "Luca", "Giulia", "Marco"], "durata": 2.5, "orario_inizio": "09:00", "orario_fine": "11:30"}]}'
+
+    # Update di un colpevole che non ha prenotato -> 404
+    - title: PUT#02 - Update riunione inesistente
+      url: /api/v1/room42/1-10-2025
+      method: PUT
+      body: '{"colpevole": "Laura Bianchi", "vittime": ["Paolo", "Francesca"], "durata": 1.0, "orario_inizio": "10:00"}'
+      exp_rc: 404
+
+    # Nuova data, nuovo colpevole
+    - title: POST#09 - Nuova riunione giorno diverso (pomeriggio)
+      url: /api/v1/room42/2-10-2025
+      method: POST
+      body: '{"colpevole": "Laura Bianchi", "vittime": ["Paolo", "Francesca", "Roberto"], "durata": 1.5, "orario_inizio": "14:30"}'
+      exp_rc: 201
+      exp_body: '{"data": "2-10-2025", "colpevole": "Laura Bianchi", "vittime": ["Paolo", "Francesca", "Roberto"], "durata": 1.5, "orario_inizio": "14:30"}'
+
+    - title: GET#07 - Riepilogo giorno 2-10-2025
+      url: /api/v1/room42/2-10-2025
+      method: GET
+      exp_rc: 200
+      exp_body: '{"data": "2-10-2025", "totale_ore": 1.5, "riunioni": [{"colpevole": "Laura Bianchi", "vittime": ["Paolo", "Francesca", "Roberto"], "durata": 1.5, "orario_inizio": "14:30", "orario_fine": "16:00"}]}'
+
+    # Inserimento secondo colpevole stesso giorno (1-10-2025) - NON SOVRAPPOSTO
+    - title: POST#10 - Secondo colpevole stesso giorno (non sovrapposto)
+      url: /api/v1/room42/1-10-2025
+      method: POST
+      body: '{"colpevole": "Paolo Verdi", "vittime": ["Simone", "Elena", "Alessio"], "durata": 3.0, "orario_inizio": "14:00"}'
+      exp_rc: 201
+      exp_body: '{"data": "1-10-2025", "colpevole": "Paolo Verdi", "vittime": ["Simone", "Elena", "Alessio"], "durata": 3.0, "orario_inizio": "14:00"}'
+
+    # Riepilogo con due riunioni (ordinate per orario_inizio)
+    - title: GET#08 - Riepilogo con due riunioni ordinate
+      url: /api/v1/room42/1-10-2025
+      method: GET
+      exp_rc: 200
+      exp_body: '{"data": "1-10-2025", "totale_ore": 5.5, "riunioni": [{"colpevole": "Mario Rossi", "vittime": ["Anna", "Luca", "Giulia", "Marco"], "durata": 2.5, "orario_inizio": "09:00", "orario_fine": "11:30"}, {"colpevole": "Paolo Verdi", "vittime": ["Simone", "Elena", "Alessio"], "durata": 3.0, "orario_inizio": "14:00", "orario_fine": "17:00"}]}'
+
+    # Test sovrapposizione temporale
+    - title: POST#11 - Sovrapposizione totale (stesso orario)
+      url: /api/v1/room42/1-10-2025
+      method: POST
+      body: '{"colpevole": "Giuseppe Neri", "vittime": ["Tutti"], "durata": 2.0, "orario_inizio": "09:00"}'
+      exp_rc: 422
+
+    - title: POST#12 - Sovrapposizione parziale (inizio durante altra riunione)
+      url: /api/v1/room42/1-10-2025
+      method: POST
+      body: '{"colpevole": "Giuseppe Neri", "vittime": ["Tutti"], "durata": 1.0, "orario_inizio": "10:30"}'
+      exp_rc: 422
+
+    - title: POST#13 - Sovrapposizione fine durante altra riunione
+      url: /api/v1/room42/1-10-2025
+      method: POST
+      body: '{"colpevole": "Giuseppe Neri", "vittime": ["Tutti"], "durata": 2.0, "orario_inizio": "08:00"}'
+      exp_rc: 422  # Controlla anche orario inizio < 08:00
+
+    # Test termine dopo le 20:00
+    - title: POST#14 - Riunione che termina dopo le 20:00
+      url: /api/v1/room42/1-10-2025
+      method: POST
+      body: '{"colpevole": "Giuseppe Neri", "vittime": ["Tutti"], "durata": 3.0, "orario_inizio": "18:00"}'
+      exp_rc: 422
+
+    # Test con durata al limite (8 ore) e orario valido
+    - title: POST#15 - Riunione da 8 ore (limite massimo, inizio presto)
+      url: /api/v1/room42/3-10-2025
+      method: POST
+      body: '{"colpevole": "Mario Rossi", "vittime": ["Anna", "Luca"], "durata": 8.0, "orario_inizio": "09:00"}'
+      exp_rc: 201
+      exp_body: '{"data": "3-10-2025", "colpevole": "Mario Rossi", "vittime": ["Anna", "Luca"], "durata": 8.0, "orario_inizio": "09:00"}'
+
+    # Test riunione al limite (termina alle 20:00 esatte)
+    - title: POST#16 - Riunione che termina alle 20:00 esatte
+      url: /api/v1/room42/4-10-2025
+      method: POST
+      body: '{"colpevole": "Laura Bianchi", "vittime": ["Paolo"], "durata": 1.0, "orario_inizio": "19:00"}'
+      exp_rc: 201
+      exp_body: '{"data": "4-10-2025", "colpevole": "Laura Bianchi", "vittime": ["Paolo"], "durata": 1.0, "orario_inizio": "19:00"}'
+
+- api_name: stats/slackers/{mese}
+  tests:
+    # Test endpoint slackers senza dati
+    - title: SLACKERS#01 - Mese senza dati
+      url: /api/v1/stats/slackers/01-2025
+      method: GET
+      exp_rc: 404
+
+    # Test mese malformato
+    - title: SLACKERS#02 - Mese malformato
+      url: /api/v1/stats/slackers/gennaio-2025
+      method: GET
+      exp_rc: 400
+
+    # Prima pulizia per preparare dati test
+    - title: PANIC#02 - Clean per preparare stats
+      url: /api/v1/panic
+      method: POST
+      exp_rc: 200
+
+    # Creazione dati per test statistiche (ottobre 2025)
+    - title: POST#17 - Riunione per stats (Mario Rossi - 1-10-2025)
+      url: /api/v1/room42/1-10-2025
+      method: POST
+      body: '{"colpevole": "Mario Rossi", "vittime": ["Paolo", "Anna", "Luca"], "durata": 4.0, "orario_inizio": "10:00"}'
+      exp_rc: 201
+      exp_body: '{"colpevole": "Mario Rossi", "data": "1-10-2025", "vittime": ["Paolo", "Anna", "Luca"], "durata": 4.0, "orario_inizio": "10:00"}'
+
+    - title: POST#18 - Altra riunione Mario Rossi (2-10-2025)
+      url: /api/v1/room42/2-10-2025
+      method: POST
+      body: '{"colpevole": "Mario Rossi", "vittime": ["Paolo", "Giulia", "Marco"], "durata": 3.0, "orario_inizio": "14:00"}'
+      exp_rc: 201
+      exp_body: '{"colpevole": "Mario Rossi", "data": "2-10-2025", "vittime": ["Paolo", "Giulia", "Marco"], "durata": 3.0, "orario_inizio": "14:00"}'
+
+    - title: POST#19 - Riunione Laura Bianchi (1-10-2025) - orario diverso per non sovrapporsi
+      url: /api/v1/room42/1-10-2025
+      method: POST
+      body: '{"colpevole": "Laura Bianchi", "vittime": ["Paolo", "Francesca"], "durata": 2.0, "orario_inizio": "15:00"}'
+      exp_rc: 201
+      exp_body: '{"colpevole": "Laura Bianchi", "data": "1-10-2025", "vittime": ["Paolo", "Francesca"], "durata": 2.0, "orario_inizio": "15:00"}'
+
+    # Test slackers per ottobre 2025 (Mario Rossi: 7 ore totali)
+    - title: SLACKERS#03 - Mese con dati (ottobre 2025)
+      url: /api/v1/stats/slackers/10-2025
+      method: GET
+      exp_rc: 200
+      # Paolo ha 4 + 3 + 2 = 9 ore
+      exp_body: '{"mese": "10-2025", "dipendente": "Paolo", "ore_riunioni": 9.0}'
+
+- api_name: stats/saboteurs/{mese}
+  tests:
+    # Test endpoint saboteurs senza dati
+    - title: SABOTEURS#01 - Mese senza dati
+      url: /api/v1/stats/saboteurs/02-2025
+      method: GET
+      exp_rc: 404
+
+    # Test mese malformato
+    - title: SABOTEURS#02 - Mese malformato
+      url: /api/v1/stats/saboteurs/febbraio-2025
+      method: GET
+      exp_rc: 400
+
+    # Test saboteurs per ottobre 2025
+    - title: SABOTEURS#03 - Mese con dati (ottobre 2025)
+      url: /api/v1/stats/saboteurs/10-2025
+      method: GET
+      exp_rc: 200
+      # Mario Rossi: 2 riunioni, vittime totali: 3+3=6, indice sabotaggio: (3*4.0)+(3*3.0)=25.0
+      # Laura Bianchi: 1 riunione, vittime totali: 2, indice sabotaggio: 2*2.0=4.0
+      exp_body: '{"mese": "10-2025", "manager": "Mario Rossi", "riunioni_organizzate": 2, "vittime_totali": 6}'
+
+    # Pulizia finale
+    - title: PANIC#03 - Clean finale
+      url: /api/v1/panic
+      method: POST
+      exp_rc: 200

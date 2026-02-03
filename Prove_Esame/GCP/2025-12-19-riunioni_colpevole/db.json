@@ -1,0 +1,5 @@
+[
+    {"id": "lorenzo_2026-02-02", "vittime": ["Luca","Noemi","Enu"], "durata": 1, "orario_inizio":"10.40"},
+    {"id": "noemi_2026-02-02", "vittime": ["Luca","lorenzo","Enu"], "durata": 2, "orario_inizio":"12.40"},
+    {"id": "enu_2026-02-02", "vittime": ["Marta","Noemi"], "durata": 2, "orario_inizio":"16.40"}
+]
