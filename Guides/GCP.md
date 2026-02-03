@@ -67,7 +67,7 @@
     ```
 ---
 # 2. Configurazione Firestone
-1. **Creazione di del Database Firestone:**
+1. **Creazione del Database Firestone:**
     ```bash
     export NAME=webuser
     gcloud iam service-accounts create ${NAME}
@@ -86,7 +86,7 @@
     ]
     ```
 3. **Creiamo il database Firestone in Gcloud Platform: [link](https://console.cloud.google.com/welcome/new?hl=it).**
-4. **Creiamo il file `file_firestone.py`:** usato per gestire la creazione/modifica/eliminazione dei dati Per creare velocemente i file.
+4. **Creiamo il file `file_firestone.py`:** usato per gestire la creazione/modifica/eliminazione dei dati.
 
     ```python
     from google.cloud import firestore
@@ -193,36 +193,22 @@ Dalla lettura del file **`dettagli_api.yaml`** fornito, estraiamo:
 
     def validate_payload(data, required_fields):
         """
-        Controlla se i campi richiesti esistono, se i tipi sono corretti
-        e se i valori sono validi.
+        Controlla se i campi richiesti esistono, se i tipi sono corretti e se i valori sono validi.
         """
         for field, expected_type in required_fields.items():
             val = data.get(field)
-            
             # 1. Controllo esistenza
             if val is None:
                 return False, f"Campo {field} mancante"
             # 2. Controllo tipo (es. int, str, bool)
             if not isinstance(val, expected_type):
                 return False, f"Campo {field} deve essere di tipo {expected_type.__name__}"
-            # 3. Controlli logici specifici (opzionale)
-            if expected_type == int and val < 0:
-                return False, f"Campo {field} non può essere negativo"
-            # 4. Controllo Email
+            # 3. Controllo Email
             if field == "email":
                 if not re.match(r"[^@]+@[^@]+\.[^@]+", val):
                     return False, "Email non valida" 
-            # 5. Controllo Data
-            if field == "date":
-                try:
-                    datetime.strptime(val, "%d-%m-%Y")
-                except ValueError:
-                    return False, "Data non valida, formato richiesto gg-mm-YYYY"
-                            
-                    return True, None   
-            # 6. Stringhe non vuote
-            if expected_type == str and val.strip() == "":
-                return False, f"Campo {field} non può essere vuoto"
+            return True
+    
 
     class FirstResource(Resource):
         
@@ -242,27 +228,23 @@ Dalla lettura del file **`dettagli_api.yaml`** fornito, estraiamo:
             request_info =request.json
             #PARAM = request_info.get("PARAM")
             return None,[200,400]
-            
-            
+                   
     #Per ciascuna classe eseguiamo il collegamento con il path corretto all'esterno della classe indicando il nome del parametro (se presente nel path).
     api.add_resource(FirstResource, f'{base_path}/colors/<string:colorName>')
-
 
     #Ecco un esempio in cui il path possiede solamente un metodo e non è presente alcun parametro:
     """
     class SecondResource(Resource):
-    def post(self):
-        db_firestone.clean_collection("COLLECTION_NAME")
-        return None,200
+        def post(self):
+            db_firestone.clean_collection("COLLECTION_NAME")
+            return None,200
         
     api.add_resource(SecondResource, f'{base_path}/clean')
     """
 
     #Per fare debug in locale
-    """
     if __name__=='__main__':
         app.run(host="localhost", port=8080, debug=True)
-    """
     ```
     **$\color{red}{\text{N.B.}}$** Per ogni path definito nel file yaml definisco una classe.
     
@@ -366,11 +348,9 @@ L'obiettivo è quello di creare un'interfaccia web per visualizzare i dati all'i
         ```
     * Loop:
         ```html
-        <ul>
-            {% for c in LIST_PARAM %}
-                <li><a href="/PATH/{{c}}">{{c}}</a></li>
-            {% endfor %}
-        </ul>
+        {% for c in LIST_PARAM %}
+            <li><a href="/PATH/{{c}}">{{c}}</a></li>
+        {% endfor %}
         ```
     * Testo linkabile:
 
@@ -406,16 +386,41 @@ L'obiettivo è quello di creare un'interfaccia web per visualizzare i dati all'i
             </tbody>
         </table>
         ```
+
+    * Tabella con `for` innestato:
+        ```html
+        <table class="table">
+            <thead>
+                <!-- Nomi delle colonne -->
+                <tr>
+                <th>Nome</th>
+                <th>Età</th>
+                <th>Città</th>
+                </tr>
+                
+            </thead>
+
+            <tbody>
+                {% for c in LIST_PARAM %}
+                    <tr>
+                    <td>c.name</td>
+                    <td>c.age</td>
+                    <td>c.city</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        ``` 
     * Form:
         ```html
         <form method="POST">
             <table>
-            <tr><td>{{cform.name.label}}</td><td>{{cform.name}}</td></tr>
-            <tr><td>{{cform.red.label}}</td><td>{{cform.red}}</td></tr>
-            <tr><td>{{cform.green.label}}</td><td>{{cform.green}}</td></tr>
-            <tr><td>{{cform.blue.label}}</td><td>{{cform.blue}}</td></tr>
-            <tr><td></td><td>{{cform.submit}}</td></tr>
-        </table>
+                <tr><td>{{cform.name.label}}</td><td>{{cform.name}}</td></tr>
+                <tr><td>{{cform.red.label}}</td><td>{{cform.red}}</td></tr>
+                <tr><td>{{cform.green.label}}</td><td>{{cform.green}}</td></tr>
+                <tr><td>{{cform.blue.label}}</td><td>{{cform.blue}}</td></tr>
+                <tr><td></td><td>{{cform.submit}}</td></tr>
+            </table>
         </form>
         ```
     * Multi Form:
@@ -441,6 +446,10 @@ L'obiettivo è quello di creare un'interfaccia web per visualizzare i dati all'i
                 <tr><td><div class="colorbox"style="width: 300px; height: 300px; background-color: rgb({{cform.red.data}}, {{cform.green.data}}, {{cform.blue.data}});"></div></td></tr>
             </tbody>
         </table>
+        ```
+    * Testo Colorato:
+        ```html
+        <p style="color:red;">{{c.colpevole}}</p>
         ```
     **$\color{red}{\text{N.B.}}$** Per altre strutture consulatare la documentazione di bootstrap [link](https://getbootstrap.com/docs/5.3/getting-started/introduction/).
    
@@ -480,7 +489,7 @@ L'obiettivo è quello di creare un'interfaccia web per visualizzare i dati all'i
     """
     @app.route('/path', methods=['GET']) 
     def nome_della_funzione():
-        return render_template("FILE.HTML", NOME_PARAMETRO="PARAMETRO")
+        return render_template("FILE.html", NOME_PARAMETRO="PARAMETRO")
         
     """Per CERCARE un elemento del database attraverso un FORM HTML"""
     @app.route('/cerca', methods=["GET", "POST"])
@@ -541,10 +550,8 @@ L'obiettivo è quello di creare un'interfaccia web per visualizzare i dati all'i
         return render_template("FILE.html", cform=cform, id_elemento=ID_PARAM)
     
     #Per fare debug in locale
-    """
     if __name__=='__main__':
         app.run(host="localhost", port=8080, debug=True)
-    """
    ```
 * **File `app.yaml`:**
     ```yaml
@@ -596,7 +603,16 @@ Le function sono delle Action che vengono eseguite in risposta al verificarsi 
                         "integerValue": "25" 
                     },
                     "nome_asilo": {
-                    "stringValue": "AsiloRossi"
+                        "stringValue": "AsiloRossi"
+                    },
+                    "vittime": {
+                        "arrayValue": {
+                            "values": [
+                                {"stringValue": "Mario"},
+                                {"stringValue": "Luigi"},
+                                {"stringValue": "Peach"}
+                            ]
+                        }
                     }
                 },
                 "name": "projects/mensa-esame/databases/mensa/documents/prenotazioni/AsiloRossi_2025-10-10",
@@ -950,50 +966,30 @@ import calendar
 # SEZIONE 1: CONVERSIONI BASE (Stringa <-> Oggetto)
 # =============================================================================
 
-def from_date_to_string(d: datetime) -> str:
-    """Converte oggetto datetime in stringa 'gg-mm-YYYY'"""
-    return d.strftime("%d-%m-%Y")
-
-def from_string_to_date(d_str: str) -> datetime:
-    """Converte stringa 'gg-mm-YYYY' in oggetto datetime"""
+def from_string_do_date(d_str: str, pattern = "%d-%m-%Y") -> datetime:
+    """
+    Converte una stringa in un oggetto datetime o time basandosi sul pattern.
+    Esempi pattern: "%d-%m-%Y", "%H:%M", "%Y-%m-%d %H:%M:%S"
+    """
+    if not value_str:
+        return None
     try:
-        return datetime.strptime(d_str, "%d-%m-%Y")
+        dt = datetime.strptime(value_str, pattern)
+        # Se il pattern contiene solo ore e minuti, restituiamo un oggetto .time()
+        if "%H" in pattern and "%d" not in pattern:
+            return dt.time()
+        return dt
     except (ValueError, TypeError):
         return None
 
-def from_time_to_string(t: time) -> str:
-    """Converte oggetto time in stringa 'HH:MM'"""
-    return t.strftime("%H:%M")
-
-def from_string_to_time(t_str: str) -> time:
-    """Converte stringa 'HH:MM' in oggetto time"""
-    try:
-        return datetime.strptime(t_str, "%H:%M").time()
-    except (ValueError, TypeError):
+def from_date_to_string(d: datetime, pattern = "%d-%m-%Y") -> str
+    """
+    Converte un oggetto (datetime o time) in stringa basandosi sul pattern.
+    """
+    if obj is None:
         return None
-
-def from_month_to_string(m: datetime) -> str:
-    """Converte oggetto datetime in stringa 'MM-YYYY'"""
-    return m.strftime("%m-%Y")
-
-def from_string_to_month(m_str: str) -> datetime:
-    """Converte stringa 'MM-YYYY' in oggetto datetime"""
-    try:
-        return datetime.strptime(m_str, "%m-%Y")
-    except (ValueError, TypeError):
-        return None
-
-def from_string_to_date_full(d_str: str) -> datetime:
-    """Converte stringa 'gg-mm-YYYY HH:MM:SS' in oggetto datetime"""
-    try:
-        return datetime.strptime(d_str, "%d-%m-%Y %H:%M:%S")
-    except (ValueError, TypeError):
-        return None
-    
-def from_date_full_to_string(d: datetime) -> str:
-    """Converte oggetto datetime in stringa 'gg-mm-YYYY HH:MM:SS'"""
-    return d.strftime("%d-%m-%Y %H:%M:%S")
-    
+    return obj.strftime(pattern)
+  
 # =============================================================================
 # SEZIONE 2: LISTE E RANGE DI DATE
 # =============================================================================
