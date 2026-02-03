@@ -147,6 +147,16 @@
             for doc in docs:
                 doc.reference.delete()
 
+        def delete_element(self, collection_name, document_id):
+            """Elimina un singolo documento dalla collezione specificata. Ritorna True se l'operazione viene inviata correttamente"""
+            try:
+                doc_ref = self.db.collection(collection_name).document(str(document_id))
+                doc_ref.delete()
+                return True
+            except Exception as e:
+                print(f"Errore durante l'eliminazione del documento {document_id}: {e}")
+                return False
+
         # --- POPOLAMENTO INIZIALE ---
         def populate_from_json(self, filename, collection_target):
             try:
@@ -199,14 +209,14 @@ Dalla lettura del file **`dettagli_api.yaml`** fornito, estraiamo:
             val = data.get(field)
             # 1. Controllo esistenza
             if val is None:
-                return False, f"Campo {field} mancante"
+                return False
             # 2. Controllo tipo (es. int, str, bool)
             if not isinstance(val, expected_type):
-                return False, f"Campo {field} deve essere di tipo {expected_type.__name__}"
+                return False
             # 3. Controllo Email
             if field == "email":
                 if not re.match(r"[^@]+@[^@]+\.[^@]+", val):
-                    return False, "Email non valida" 
+                    return False
             return True
     
 
@@ -973,10 +983,10 @@ def from_string_do_date(d_str: str, pattern = "%d-%m-%Y") -> datetime:
     Converte una stringa in un oggetto datetime o time basandosi sul pattern.
     Esempi pattern: "%d-%m-%Y", "%H:%M", "%Y-%m-%d %H:%M:%S"
     """
-    if not value_str:
+    if not d_str:
         return None
     try:
-        dt = datetime.strptime(value_str, pattern)
+        dt = datetime.strptime(d_str, pattern)
         # Se il pattern contiene solo ore e minuti, restituiamo un oggetto .time()
         if "%H" in pattern and "%d" not in pattern:
             return dt.time()
@@ -984,13 +994,13 @@ def from_string_do_date(d_str: str, pattern = "%d-%m-%Y") -> datetime:
     except (ValueError, TypeError):
         return None
 
-def from_date_to_string(d: datetime, pattern = "%d-%m-%Y") -> str
+def from_date_to_string(d: datetime, pattern = "%d-%m-%Y") -> str:
     """
     Converte un oggetto (datetime o time) in stringa basandosi sul pattern.
     """
-    if obj is None:
+    if d is None:
         return None
-    return obj.strftime(pattern)
+    return d.strftime(pattern)
   
 # =============================================================================
 # SEZIONE 2: LISTE E RANGE DI DATE
@@ -1242,3 +1252,47 @@ data_parziale = data_parziale.replace(year=data_parziale.year + 1,month= 1)
     
     #nuovo_id = uuid.uuid4()
     ```   
+* **Generazione e Controllo IPaddress:**
+     ```python
+    import ipaddress
+
+    def is_valid_ip(ip_str):
+        try:
+            ipaddress.IPv4Address(ip_str)
+            return True
+        except ValueError:
+            return False
+
+    # Esempio:
+    # is_valid_ip("192.168.1.1") -> True
+    # is_valid_ip("192.168.1.300") -> False
+
+    """Controlliamo che il NetworkID inviato sia reale risettetto alla maschera"""
+    def check_netid(ip, cidr):
+        try:
+            # strict=True lancia errore se ci sono bit host impostati (es. .5/24)
+            ipaddress.IPv4Network(f"{ip}/{cidr}", strict=True)
+            return True
+        except ValueError:
+            return False
+
+    """Serve a capire se un pacchetto (IP) può passare attraverso una determinata regola (Rete)."""
+    def find_matching_rules(target_ip_str, rules_from_db):
+        """
+        target_ip_str: l'IP da testare (es. "192.168.1.10")
+        rules_from_db: lista di dizionari dal database
+        """
+        addr = ipaddress.IPv4Address(target_ip_str)
+        matches = []
+
+        for rule in rules_from_db:
+            # Costruisco la rete della regola
+            # strict=False corregge eventuali errori nel DB (es. 192.168.1.1/24 diventa .0/24)
+            net = ipaddress.IPv4Network(f"{rule['ip']}/{rule['netmaskCIDR']}", strict=False)
+            
+            # Controllo magico: l'IP è contenuto nella rete?
+            if addr in net:
+                matches.append(rule)
+                
+        return matches
+    ```  

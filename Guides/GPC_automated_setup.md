@@ -90,10 +90,10 @@
         Converte una stringa in un oggetto datetime o time basandosi sul pattern.
         Esempi pattern: "%d-%m-%Y", "%H:%M", "%Y-%m-%d %H:%M:%S"
         """
-        if not value_str:
+        if not d_str:
             return None
         try:
-            dt = datetime.strptime(value_str, pattern)
+            dt = datetime.strptime(d_str, pattern)
             # Se il pattern contiene solo ore e minuti, restituiamo un oggetto .time()
             if "%H" in pattern and "%d" not in pattern:
                 return dt.time()
@@ -101,13 +101,13 @@
         except (ValueError, TypeError):
             return None
 
-    def from_date_to_string(d: datetime, pattern = "%d-%m-%Y") -> str
+    def from_date_to_string(d: datetime, pattern = "%d-%m-%Y") -> str:
         """
         Converte un oggetto (datetime o time) in stringa basandosi sul pattern.
         """
-        if obj is None:
+        if d is None:
             return None
-        return obj.strftime(pattern)
+        return d.strftime(pattern)
     
     # =============================================================================
     # SEZIONE 2: LISTE E RANGE DI DATE
@@ -331,14 +331,14 @@
             val = data.get(field)
             # 1. Controllo esistenza
             if val is None:
-                return False, f"Campo {field} mancante"
+                return False
             # 2. Controllo tipo (es. int, str, bool)
             if not isinstance(val, expected_type):
-                return False, f"Campo {field} deve essere di tipo {expected_type.__name__}"
+                return False
             # 3. Controllo Email
             if field == "email":
                 if not re.match(r"[^@]+@[^@]+\.[^@]+", val):
-                    return False, "Email non valida" 
+                    return False
             return True
 
 
@@ -535,6 +535,16 @@
             docs = self.db.collection(collection_name).stream()
             for doc in docs:
                 doc.reference.delete()
+
+        def delete_element(self, collection_name, document_id):
+            """Elimina un singolo documento dalla collezione specificata. Ritorna True se l'operazione viene inviata correttamente"""
+            try:
+                doc_ref = self.db.collection(collection_name).document(str(document_id))
+                doc_ref.delete()
+                return True
+            except Exception as e:
+                print(f"Errore durante l'eliminazione del documento {document_id}: {e}")
+                return False
 
         # --- POPOLAMENTO INIZIALE ---
         def populate_from_json(self, filename, collection_target):
