@@ -747,7 +747,7 @@ Le function sono delle Action che vengono eseguite in risposta al verificarsi 
           * Togliamo dalla funzione il parametro `context`
           * Utilizziamo nel main un `fake_event`:
  
-            ```json
+            ```python
             fake_event = {
                 "value": {
                     "name": "projects/test/databases/(default)/documents/letture/12-05-2026",
