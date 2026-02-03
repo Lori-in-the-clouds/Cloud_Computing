@@ -1,0 +1,9 @@
+.git
+.gitignore
+
+credentials.json
+__pycache__/
+
+.venv/
+/setup.gfc
+.pdf
