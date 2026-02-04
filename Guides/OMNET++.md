@@ -672,7 +672,7 @@ plt.savefig("UtilMM1.png", dpi=300, bbox_inches='tight')
     $$\displaystyle N=\frac{\lambda}{\mu-\frac{1}{Avg\_Tr}}$$
 * **Formula di Pollaczek-Chinchne:**
     
-    $$T_r=\frac{1}{\mu}+ \frac{\rho \cdot \frac{1}{\mu}\cdot (1 + c^2)}{2(1-\rho)}$$
+    $$\displaystyle T_r=\frac{1}{\mu}+ \frac{\rho \cdot \frac{1}{\mu}\cdot (1 + c^2)}{2(1-\rho)}$$
     
     Se il processo ha service time $M$ (=esponenziale), allora $c=1$
 
