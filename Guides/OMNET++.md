@@ -83,7 +83,7 @@ Questo file viene utilizzato per definire la struttura della rete. I componenti 
 * [Delay](components_omnet/delay.md): è un tempo fisso che viene applicato ad ogni task per simulare delle operazioni. 
 * [Sink](components_omnet/sink.md): corrisponde all'output della network e viene utilizzato per calcolare alcune statistiche di performance.
 
-**`file.ned`**
+Il **`file.ned`**:
 ```ned
 import org.omnetpp.queueing.Queue;
 import org.omnetpp.queueing.Source;
@@ -181,7 +181,7 @@ extends = NOME_CONF_DA_ESTENDERE
     * `.vec`: contiene i vettori.
     * `.vci`: indice ai vettori, per migliorare le performance.
     
-    A noi interessano i file `.sca`, e' qui che si salvano le statistiche che abbiamo specificato nel file `.ini.mako`.
+    A noi interessano i file `.sca`, è qui che si salvano le statistiche che abbiamo specificato nel file `.ini.mako`.
 ---
 # 4. Creazione file `.json`
 Per convertire i file di output `.sca` in un database SQLite, si utilizza un file di configurazione JSON che definisce tre tabelle principali:
@@ -191,7 +191,7 @@ Per convertire i file di output `.sca` in un database SQLite, si utilizza un fil
 ## 4.1. File `.json`
 - `scenario_schema`: specifica i parametri del file `.sca` da mappare nel database.
 
-    N.B. I parametri devono essere definiti nel file `.ini` (o `.ini.mako`) per essere registrati come scalari nel file `.sca`.
+     **$\color{red}{\text{N.B.}}$**  I parametri devono essere definiti nel file `.ini` (o `.ini.mako`) per essere registrati come scalari nel file `.sca`.
 - `metrics`: definisce le metriche da estrarre (es. `ResponseTime`, `WaitingTime`) indicando il modulo OMNeT++ e il nome dello scalare.
 - `histograms`: specifica gli istogrammi di interesse (es. `lifeTime:histogram`).
 - `aggregation`: determina come gestire campioni multipli per la stessa metrica:
