@@ -659,20 +659,25 @@ plt.savefig("UtilMM1.png", dpi=300, bbox_inches='tight')
 ```
 ---
 # 10. Formule Utili
+* **Formula di Pollaczek-Khinchin (Caso M/G/1):**
+    
+    $$\displaystyle T_r=\frac{1}{\mu}+ \frac{\rho \cdot \frac{1}{\mu}\cdot (1 + c^2)}{2(1-\rho)}$$
+  Analisi Casi particolari:
+
+  - **Service time M (=Esponenziale):** in questo caso il coefficiente di variazione è $c=1$. La formula P-K si semplifica nel classico modello M/M/1. Se il traffico $\lambda$ è diviso tra $N$ server paralleli:
+    $$\displaystyle T_r = \frac{1}{\mu -\frac{\lambda}{N}}$$
+    Formula inversa per trovare $N$:
+    $$\displaystyle N=\frac{\lambda}{\mu-\frac{1}{T_r}}$$
+
+  - **Service time G (=Generale):** A differenza di quanto si pensi, la formula P-K scritta sopra è la formula chiusa per il tempo di risposta medio. Tuttavia, non esiste una formula chiusa semplice per la distribuzione completa del tempo di risposta (a meno di non usare le trasformate di Laplace).
+
+  - **Service time D (=Deterministico):** In questo caso il tempo di servizio è costante, quindi non c'è varianza ($c=0$). La formula si riduce a:
+
+    $$T_r=\frac{1}{\mu}+ \frac{\frac{\rho}{\mu}}{(1-\rho)}\cdot 0.5$$
+
 * **Utilizzo del server:**
 
     $$\displaystyle\rho=\frac{\lambda}{\mu}$$
-* **Tempo di Arrivo:**
-  
-  $$\displaystyle \text{Avg\_Tr} = \frac{1}{\mu -\frac{\lambda}{N}}$$
-  
-  con $N$, che rappresenta il numero di server in parallelo.
-* **Formula inversa del tempo di arrivo** per trovare il numero $N$ di server necessari per soddisfare i requesiti:
-    
-    $$\displaystyle N=\frac{\lambda}{\mu-\frac{1}{Avg\_Tr}}$$
-* **Formula di Pollaczek-Chinchne:**
-    
-    $$\displaystyle T_r=\frac{1}{\mu}+ \frac{\rho \cdot \frac{1}{\mu}\cdot (1 + c^2)}{2(1-\rho)}$$
-    
-    Se il processo ha service time $M$ (=esponenziale), allora $c=1$
 
+
+**$\color{red}{\text{N.B.}}$** Per risolvere le equazione online utiizzare il seguente [link](https://it.symbolab.com/solver/equation-calculator).
