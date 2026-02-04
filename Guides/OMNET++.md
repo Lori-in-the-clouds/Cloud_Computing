@@ -660,9 +660,7 @@ plt.savefig("UtilMM1.png", dpi=300, bbox_inches='tight')
 ---
 # 10. Formule Utili
 * **Utilizzo del server:**
-    $$
-    \rho=\frac{\lambda}{\mu}
-    $$
+    $$\rho=\frac{\lambda}{\mu}$$
 * **Tempo di Arrivo:**
   $$
     Avg\_Tr = \frac{1}{\mu -\frac{\lambda}{N}}
