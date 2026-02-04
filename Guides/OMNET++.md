@@ -658,7 +658,23 @@ plt.legend(loc='upper left')
 plt.savefig("UtilMM1.png", dpi=300, bbox_inches='tight')
 ```
 ---
+# 10. Formule Utili
+* **Utilizzo del server:**
+  $$
+    \rho = \frac{\lambda}{\mu}
+  $$
+* **Tempo di Arrivo:**
+  $$
+    Avg\_Tr = \frac{1}{\mu -\frac{\lambda}{N}}
+  $$
+  con $N$, che rappresenta il numero di server in parallelo.
+* **Formula inversa del tempo di arrivo** per trovare il numero $N$ di server necessari per soddisfare i requesiti:
 $$
-    CIAO A TUTTI
+N = \frac{\lambda}{\mu-\frac{1}{Avg\_Tr}}
 $$
+* **Formula di Pollaczek-Chinchne:**
+    $$
+    T_r = \frac{1}{\mu}+ \frac{\rho \cdot \frac{1}{\mu}\cdot (1 + c^2)}{2(1-\rho)}
+    $$
+    Se il processo ha service time $M$ (=esponenziale), allora $c=1$
 
