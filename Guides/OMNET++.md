@@ -662,8 +662,8 @@ plt.savefig("UtilMM1.png", dpi=300, bbox_inches='tight')
 * **Formula di Pollaczek-Khinchin (Caso M/G/1):**
     
     $$\displaystyle T_r=\frac{1}{\mu}+ \frac{\rho \cdot \frac{1}{\mu}\cdot (1 + c^2)}{2(1-\rho)}$$
-  Analisi Casi particolari:
-
+  
+  Analisi casi particolari:
   - **Service time M (=Esponenziale):** in questo caso il coefficiente di variazione è $c=1$. La formula P-K si semplifica nel classico modello M/M/1. Se il traffico $\lambda$ è diviso tra $N$ server paralleli:
     $$\displaystyle T_r = \frac{1}{\mu -\frac{\lambda}{N}}$$
     Formula inversa per trovare $N$:
