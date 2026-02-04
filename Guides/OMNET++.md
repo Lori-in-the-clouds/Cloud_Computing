@@ -684,3 +684,20 @@ plt.savefig("UtilMM1.png", dpi=300, bbox_inches='tight')
 
 
 **$\color{red}{\text{N.B.}}$** Per risolvere le equazione online utiizzare il seguente [link](https://it.symbolab.com/solver/equation-calculator).
+---
+# 11. Altri comandi utili
+* **Per visualizzare il file `.ini` in IDE:**
+
+    ```bash
+    ./queuenet file.ini
+    ```
+* **Per cancellare i file dentro la directory `/results`:**
+
+    ```bash
+    rm -rf results/*
+    ``` 
+* **Script di simulazione:**
+    ```bash
+    ./simulate.sh <nome_file_senza_estensione> <"Fase_1_mu*-#*”>
+    ```  
+---
