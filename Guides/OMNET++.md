@@ -667,8 +667,9 @@ plt.savefig("UtilMM1.png", dpi=300, bbox_inches='tight')
   - **Service time M (=Esponenziale):** in questo caso il coefficiente di variazione è $c=1$. La formula P-K si semplifica nel classico modello M/M/1. Se il traffico $\lambda$ è diviso tra $N$ server paralleli:
   
     $$\displaystyle T_r = \frac{1}{\mu -\frac{\lambda}{N}}$$
-    Formula inversa per trovare $N$:
     
+    Formula inversa per trovare $N$:
+
     $$\displaystyle N=\frac{\lambda}{\mu-\frac{1}{T_r}}$$
 
   - **Service time G (=Generale):** A differenza di quanto si pensi, la formula P-K scritta sopra è la formula chiusa per il tempo di risposta medio. Tuttavia, non esiste una formula chiusa semplice per la distribuzione completa del tempo di risposta (a meno di non usare le trasformate di Laplace).
