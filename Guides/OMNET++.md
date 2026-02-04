@@ -664,7 +664,7 @@ plt.savefig("UtilMM1.png", dpi=300, bbox_inches='tight')
     $$\displaystyle\rho=\frac{\lambda}{\mu}$$
 * **Tempo di Arrivo:**
   
-  $$\displaystyle Avg\_Tr = \frac{1}{\mu -\frac{\lambda}{N}}$$
+  $$\displaystyle \text{Avg\_Tr} = \frac{1}{\mu -\frac{\lambda}{N}}$$
   
   con $N$, che rappresenta il numero di server in parallelo.
 * **Formula inversa del tempo di arrivo** per trovare il numero $N$ di server necessari per soddisfare i requesiti:
