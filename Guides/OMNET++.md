@@ -30,49 +30,64 @@
         chmod +x run
         ```
         
-- **Script di simulazione**
-    
+- **Script di simulazione `simulate.sh`:** lo script centralizza l'intero workflow di simulazione, dalla configurazione iniziale all'analisi finale dei dati. Sintassi:
     ```bash
+    ./simulate.sh <step> ["pattern_*.sca"]
+    ```
+    Dove:
+    - **step 0** -> `update_template.py` 
+    - **step 1** -> `make_runfile.py -f esame.ini`
+    - **step 2** -> `make -j $(sysctl -n hw.ncpu) -B -f Runfile`
+    - **step 3** -> `parse_data.py -c esame.json -d database.db -r results/pattern_*.sca`
+    - **step 4** -> `analyze_data.py -c nomeconfig.json -d database.db`
+    
+    **$\color{red}{\text{N.B.}}$** Il `pattern_*.sca` è obbligatorio solo per la fase 3 e 4.
+
+    ```python
     #!/bin/bash
-    
-    # --- 1. Controllo Input ---
-    nome_sim=$1
-    path=$2
-    
-    if [ -z "$nome_sim" ]; then
-      echo "Errore: Devi specificare il nome del file (senza estensione)."
-      echo "Esempio: ./simulate.sh MM1_base"
-      exit 1
+
+    # 1. Recupero dei parametri da riga di comando
+    STOP_STEP=$1
+    SCA_PATTERN=$2
+
+    # 2. Controllo se il primo parametro (lo step) è presente
+    if [ -z "$STOP_STEP" ]; then
+    echo "❌ Errore: Specifica lo step finale (0-4)."
+    echo "Uso: ./simulate.sh <step> [pattern_sca]_*.sca"
+    exit 1
     fi
-    
-    # --- 2. Pulizia (Fondamentale per evitare l'IndexError) ---
-    # Rimuoviamo i vecchi risultati per assicurarci che il parse legga solo i nuovi dati
-    echo "Pulizia vecchi risultati..."
-    rm -f results/${nome_sim}_* 
-    rm -f ${nome_sim}.db
-    
-    update_template.py
-    
-    # --- 3. Generazione Runfile ---
-    echo "Generazione del Runfile da Mako..."
-    # Se il tuo file si chiama nome_sim.ini.mako, aggiungi l'estensione qui sotto
-    make_runfile.py -f ${nome_sim}.ini.mako 
-    
-    # --- 4. Esecuzione Simulazioni ---
-    echo "Lancio simulazioni"
+
+    # 3. Controllo obbligatorietà del pattern per gli step 3 e 4
+    if [ "$STOP_STEP" -ge 3 ] && [ -z "$SCA_PATTERN" ]; then
+    echo "❌ Errore: Per gli step 3 e 4 devi passare il pattern .sca come secondo parametro."
+    echo "Esempio corretto: ./run_esame.sh $STOP_STEP mu1"
+    exit 1
+    fi
+
+    # --- STEP 0: Mako ---
+    echo "--- STEP 0: Compilazione Mako ---"
+    update_template.py 
+    if [ "$STOP_STEP" -le 0 ]; then exit 0; fi
+
+    # --- STEP 1: Runfile ---
+    echo "--- STEP 1: Generazione Runfile ---"
+    make_runfile.py -f esame.ini
+    if [ "$STOP_STEP" -le 1 ]; then exit 0; fi
+
+    # --- STEP 2: Simulazione ---
+    echo "--- STEP 2: Simulazione in corso (Multicore Mac) ---"
     make -j $(sysctl -n hw.ncpu) -B -f Runfile
-    
-    # --- 5. Parsing (Caricamento nel Database) ---
-    echo "Parsing dei dati nel database SQLite..."
-    # Nota: usiamo -c per il file di configurazione JSON
-    parse_data.py -c config${nome_sim}.json -d ${nome_sim}.db -r results/${path}*.sca
-    
-    # --- 6. Analisi (Generazione tabelle .data) ---
-    echo "Estrazione risultati finali..."
-    # Attenzione: analyze_data di solito usa il flag -j per il file JSON
-    analyze_data.py -c config${nome_sim}.json -d ${nome_sim}.db
-    
-    echo "--- Processo Completato! ---"
+    if [ "$STOP_STEP" -le 2 ]; then exit 0; fi
+
+    # --- STEP 3: Parsing ---
+    echo "--- STEP 3: Parsing con pattern: $SCA_PATTERN ---"
+    parse_data.py -c esame.json -d database.db -r results/${SCA_PATTERN}
+    if [ "$STOP_STEP" -le 3 ]; then exit 0; fi
+
+    # --- STEP 4: Analisi ---
+    echo "--- STEP 4: Analisi finale ---"
+    analyze_data.py -c esame.json -d database.db
+    echo "--- ✨ Workflow completato con successo! ---"
     ```
 ---
 ## 1. Creazione file `.ned`
