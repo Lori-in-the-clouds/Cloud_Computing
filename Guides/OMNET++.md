@@ -6,7 +6,7 @@
     nano ~/.zshrc
     ```
 
-    ```bash
+    ```
     alias startomnet='cd ~/omnet-install/omnetpp-6.3.0 && source setenv && cd samples/queuenet'
     ```
     
