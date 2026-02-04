@@ -85,11 +85,12 @@ Questo file viene utilizzato per definire la struttura della rete. I componenti 
 
 Il **`file.ned`**:
 ```ned
-import org.omnetpp.queueing.Queue;
 import org.omnetpp.queueing.Source;
+import org.omnetpp.queueing.Router;
+import org.omnetpp.queueing.Queue;
 import org.omnetpp.queueing.Sink;
 
-network MM1 {
+network esame {
 
     parameters:
         int K = default(10);
@@ -100,43 +101,30 @@ network MM1 {
         srv.capacity = K;
         srv.serviceTime = 1s * exponential(1 / mu);
         src.interArrivalTime = 1s * exponential(1 / lambda);
+        //src[*].interArrivalTime = exponential(1s/lambda)
 
     submodules:
-        src: Source;
-        srv: Queue;
-        sink: Sink;
-        r: Router;
+		//src: Source;
+        //srv: Queue;
+        //sink: Sink;
+        //r: Router;
+        //src[N]: Source;
 
     connections:
         src.out --> srv.in++;
         srv.out --> sink.in++;
-}
-```
-Focus su array di elementi:
-```ned
 
-network MG1
-{
-	parameters:
-		src[*].interArrivalTime = exponential(1s/lambda);
-		...
-
-	submodules:
-		src[N]: Source;
-		... 
-
-	connections:
-	    for i=0..N-1 { 
-		    src[i].out --> delay[i].in++;
-            delay[i].out --> srv[i].in++;
-	    }
+        //for i=0..N-1 { 
+		//src[i].out --> delay[i].in++;
+        //delay[i].out --> srv[i].in++;
+	    //} per fare cicli
 }
 ```
 # 2. Creazione file `ini.mako`:
 ```ini
 [General]
 ned-path = .;../queueinglib
-network = NETWORK
+network = esame
 repeat = 5
 cpu-time-limit = 60s
 sim-time-limit = 10000s
@@ -154,9 +142,31 @@ sim-time-limit = 10000s
 %endfor
 %endfor
 
-
 [Config CONF_2]
 extends = NOME_CONF_DA_ESTENDERE
+
+
+#--- PARAMETRI SOURCE ---
+# Usiamo il wildcard [*] per prendere tutti i sink
+**.src.interArrivalTime = 1s * exponential(1 / **lambda) #intervallo di tempo tra la generazione di un job e il successivo
+**.src.jobType = 0 #Un'etichetta numerica che assegni al job
+**.src.jobName = "LowTraffic" #Un'etichetta descrittiva per il job
+
+#--- PARAMETRI QUEUE ---
+**.srv.serviceTime = 1s * exponential(1 / **mu) #Quanto tempo il server impiega per elaborare un job
+**.srv.serviceTime = 1.0s * lognormal(log(1.0(mu * sqrt(1 + cv^2))), sqrt(log(1 + cv^2)));
+**.srv.capacity = -1  # Coda infinita
+**.srv[*].busy.result-recording-modes = +timeavg #Utilizzazione del server (\rho)
+		
+#--- PARAMETRI DELAY ---
+**.delay.delay = uniform(0.1s, 0.2s)
+		
+#--- PARAMETRI CLASSIFIER (Parte 3) ---
+**.classifier.dispatcherField = "jobType" #Indica al modulo quale "etichetta" del job deve leggere per decidere verso quale uscita mandarlo.
+#Se scrivi "jobType", lui guarderà il numero che hai assegnato nella sorgente.
+		
+#--- REGISTRAZIONE STATISTICHE (SINK) ---
+**.sink[*].lifeTime.result-recording-modes = +mean, +max #tempo di risposta T_r
 ```
 ---
 # 3. Creo il file `.ini` dal file `.ini.mako`
@@ -200,7 +210,7 @@ Per convertire i file di output `.sca` in un database SQLite, si utilizza un fil
 ```json
 {
     "scenario_schema": {
-        "Balance": {"pattern": "**.Balance", "type": "varchar"},
+        "Balance": {"pattern": "**.Balance", "type": "string"},
         "lambda1": {"pattern": "**.lambda1", "type": "real"},
         "lambda2": {"pattern": "**.lambda2", "type": "real"},
         "mu1": {"pattern": "**.mu1", "type": "real"},
@@ -257,8 +267,8 @@ I dati del database `.db` vengono analizzati per generare i file `.data` definit
                 "range": ["rho"]
             },
             "metrics": [
-                {"metric": "TotalJobs", "aggr": "none"},
-                {"metric": "DroppedJobs", "aggr": "none"}
+                        {"metric": "TotalJobs", "aggr": "none"},
+                        {"metric": "DroppedJobs", "aggr": "none"}
                     ]
         },
         "SensRho-K10": {
@@ -291,7 +301,7 @@ Per ogni configurazione di `analysis` è necessario specificare un **nome** e i 
   
 	- `aggr`: tipo di aggregazione applicata (`avg`, `sum`, `std`, `none`), coerente con quelle usate in parse_data.
 
-## 6.1. Focus su Analisi di Istogrammi
+## 6.2. Focus su Analisi di Istogrammi
 L’analisi istogramma produce una stima della Funzione di Densità di Probabilità (PDF) media sulle diverse run, opportunamente normalizzata e interpolata.
 
 Quando si eseguono $N$ run della stessa simulazione (ad esempio con seed diversi), ogni run genera un istogramma proprio. Tuttavia:
@@ -329,8 +339,14 @@ Per ogni configurazione di `analysis` è necessario specificare un nome e i segu
 - `scenario` (object, al singolare): dizionario di parametri fissi che identificano univocamente la configurazione da analizzare (tutti i parametri tranne il run number).
 - `histogram`: nome dell’istogramma (o del modulo) salvato nella tabella histogram.
 ---
-# 7. Calcoliamo Tempo di risposta medio, IC e costo
-## 7.1. Caso con una configurazione
+# 7. Eseguiamo l'analisi dei dati
+Una volta popolato il database SQLite tramite il processo di parsing, l'ultimo step consiste nell'estrarre i dati aggregati (medie, intervalli di confidenza, etc.) definiti nel file di configurazione:
+```bash
+analyze_data.py -c nomeconfig.json -d database.db
+```
+---
+# 8. Calcoliamo Tempo di risposta medio, IC e costo
+## 8.1. Caso con una configurazione
 ```python
 import matplotlib.pyplot as plt
 import numpy as np
@@ -373,7 +389,7 @@ costo2 = evaluate_price(busy2, 1.5)
 print(f"40 server in parallelo, tipologia1 --> Tr={m1*1000:.3f}+-{ic1*1000:.3f}ms, costo={costo1:.2f}$")
 print(f"40 server in parallelo, tipologia2 --> Tr={m2*1000:.3f}+-{ic2*1000:.3f}ms, costo={costo2:.2f}$")
 ```
-## 7.2. Caso con più configurazioni
+## 8.2. Caso con più configurazioni
 ```python
 import matplotlib.pyplot as plt
 import numpy as np
@@ -429,7 +445,7 @@ for row in range(data.shape[0]):
     print(f"{int(n)} tipologia2 --> Tr={m*1000:.3f}+-{ic*1000:.3f}ms, costo={costo:.5f}$")
 ```
 ---
-# 8. Plottiamo i dati con plotlib 
+# 9. Plottiamo i dati con plotlib 
 1. **Creiamo nel progetto il file utils del prof, `plot.py`:
     ```python
     #!/usr/bin/python3
@@ -536,7 +552,7 @@ for row in range(data.shape[0]):
         plt.show()
    ```
 ---
-# 9. Focus su Plot, file iper generico del prof
+# 10. Focus su Plot, file iper generico del prof
 ```python
 import matplotlib.pyplot as plt
 import numpy as np
@@ -658,7 +674,7 @@ plt.legend(loc='upper left')
 plt.savefig("UtilMM1.png", dpi=300, bbox_inches='tight')
 ```
 ---
-# 10. Formule Utili
+# 11. Formule Utili
 * **Formula di Pollaczek-Khinchin (Caso M/G/1):**
     
     $$\displaystyle T_r=\frac{1}{\mu}+ \frac{\rho \cdot \frac{1}{\mu}\cdot (1 + c^2)}{2(1-\rho)}$$
@@ -686,7 +702,7 @@ plt.savefig("UtilMM1.png", dpi=300, bbox_inches='tight')
 **$\color{red}{\text{N.B.}}$** Per risolvere le equazione online utiizzare il seguente [link](https://it.symbolab.com/solver/equation-calculator).
 
 ---
-# 11. Altri comandi utili
+# 12. Altri comandi utili
 * **Per visualizzare il file `.ini` in IDE:**
 
     ```bash
