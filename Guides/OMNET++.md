@@ -441,10 +441,12 @@ def compute_cost_comparison(busy_percentage1,busy_percentage2,cost_per_hour1,cos
     costo_totale2 = busy_percentage2 * SIM_TIME_LIMIT * (cost_per_hour2 / 3600.0)
     print(f"Costo totale 1 -> {(costo_totale1 * n):.2f}")
     print(f"Costo totale 2 -> {(costo_totale2 * n):.2f}") 
+    return costo_totale1, costo_totale2
 
 def compute_cost(busy_percentage,cost_per_hour, n = N):
     costo_totale = busy_percentage * SIM_TIME_LIMIT * (cost_per_hour / 3600.0)
     print(f"Costo totale -> {costo_totale * n:.2f}")
+    return costo_totale
 
 #---COSTO DEL SISTEMA IN UN ORA (considerando N server)---
 def compute_cost_comparison_hour(busy_percentage1,busy_percentage2,cost_per_hour1,cost_per_hour2, n = N):
@@ -452,10 +454,12 @@ def compute_cost_comparison_hour(busy_percentage1,busy_percentage2,cost_per_hour
     costo_totale2 = busy_percentage2 * SIM_TIME_LIMIT * (cost_per_hour2 / 3600.0)
     print(f"Costo totale 1 in un ora -> {((costo_totale1 / SIM_TIME_LIMIT) * 3600 * n):.2f}$/hour")
     print(f"Costo totale 2 in un ora -> {((costo_totale2 / SIM_TIME_LIMIT) * 3600 * n):.2f}$/hour") 
+    return ((costo_totale1 / SIM_TIME_LIMIT) * 3600 * n), ((costo_totale2 / SIM_TIME_LIMIT) * 3600 * n)
 
 def compute_cost_hour(busy_percentage,cost_per_hour, n = N):
     costo_totale = busy_percentage * SIM_TIME_LIMIT * (cost_per_hour / 3600.0)
     print(f"Costo totale in un ora -> {(costo_totale / SIM_TIME_LIMIT) * 3600 * n:.2f}$/hour")
+    return ((costo_totale / SIM_TIME_LIMIT) * 3600 * n)
 
 #n_repeat è il numero di run per configurazione
 def compute_CI(std, confidence_percentage,label=""):
@@ -464,11 +468,14 @@ def compute_CI(std, confidence_percentage,label=""):
     q = 1 - (alpha / 2)
     t_critical = t.ppf(q, df)
     ic = t_critical * (std / math.sqrt(REPETITIONS))
-    return print(f"CI_{label} -> +-{(ic):.8f}")
+    print(f"CI_{label} -> +-{(ic):.8f}")
+    return ic
 
 print("server 1".center(50, "="))
 
 data = np.loadtxt("results/fase_2_mu1.data")
+list_ic_costo = []
+
 for row in range(data.shape[0]):
     row_data = data[row,:]
 
@@ -476,27 +483,41 @@ for row in range(data.shape[0]):
     std = row_data[2]
     busy = row_data[3]
 
-
     ic = compute_CI(std,65,label=str(n))
-    compute_cost_hour(busy_percentage=busy,cost_per_hour=1.5,n=n)
+    costo = compute_cost_hour(busy_percentage=busy,cost_per_hour=1.5,n=n)
+    
+    #Per salvare i valori di N, IC e costo in un file
+    #list_ic_costo.append([n,ic,costo])   
+
+#Per salvare i valoir di N, IC e costo in un file    
+#np.savetxt("results/ic_mu1_err.data", list_ic_costo, header="N\tIC\tCosto", fmt=['%d', '%.8f', '%.3f'])
+
 
 print("\n")
 print("server 2".center(50, "="))
 
 data = np.loadtxt("results/fase_2_mu2.data")
+list_ic_costo = []
 for row in range(data.shape[0]):
     row_data = data[row,:]
 
     n = row_data[0]
     std = row_data[2]
     busy = row_data[3]
-
+   
     ic = compute_CI(std,65,label=str(n))
-    compute_cost_hour(busy_percentage=busy,cost_per_hour=3,n=n)
+    costo = compute_cost_hour(busy_percentage=busy,cost_per_hour=3,n=n)
+
+    #Per salvare i valoir di N, IC e costo in un file  
+    #list_ic_costo.append([n,ic,costo])   
+
+#Per salvare i valoir di N, IC e costo in un file    
+#np.savetxt("results/ic_mu2_err.data", list_ic_costo, header="N\tIC\tCosto", fmt=['%d', '%.8f', '%.3f'])
 ```
 ---
 # 9. Plottiamo i dati con plotlib 
-1. **Creiamo nel progetto il file utils del prof, `plot.py`:
+1. **Creiamo nel progetto il file utils del prof, `plot.py`:**
+
     ```python
     #!/usr/bin/python3
     import sys
@@ -554,8 +575,9 @@ for row in range(data.shape[0]):
             ax.plot(xcol, ycol, format, data=data, label=label)
     ```
 2. **Creiamo il file per geneare il plot, `bonus.py`:**
-   ```python
-   #!/usr/bin/python3
+
+    ```python
+    #!/usr/bin/python3
     import sys
     import pandas as pd
     import matplotlib.pyplot as plt
@@ -563,10 +585,17 @@ for row in range(data.shape[0]):
     from matplotlib.patches import Patch
     import matplotlib as mpl
     import matplotlib.colors as mc
-    from plots import plot_line, set_fonts
+    from plot import plot_line, set_fonts
 
-    lam=200
-    cv=1.0
+    lam=200 #MODIFICA
+    cv=1.0  #MODIFICA
+
+    """
+    cv = 1.0 se il tempo di servizio è esponenziale
+    cv = 0.0 determinstico
+    """
+
+    #Utilizzata per calcolare il tempo di risposta medio atteso
     def theoretical(N, mu):
         rho=lam/(mu * N)
         if rho >= 1:
@@ -574,35 +603,56 @@ for row in range(data.shape[0]):
         else:
             return 1/mu * (1 + ((1+cv**2)/2)*rho/(1-rho)) 
         
-    data_mu1 = np.loadtxt("results/es3_mu1.data")
-    data_mu2 = np.loadtxt("results/es3_mu2.data")
+    data_mu1 = np.loadtxt("results/fase_2_mu1.data") #MODIFICA
+    data_mu2 = np.loadtxt("results/fase_2_mu2.data") #MODIFICA
 
-    tr_mu1 = data_mu1[:,1]
-    tr_mu2 = data_mu2[:,1]
+    N_mu1 = data_mu1[:,0] 
+    N_mu2 = data_mu2[:,0]
 
-    pts_mu1 = data_mu1[:,0]
-    pts_mu2 = data_mu2[:,0]
+    life_time_mu1 = data_mu1[:,1]
+    life_time_mu2 = data_mu2[:,1]
+
+    #Per ricavare il CI
+    data_ci_mu1 = np.loadtxt("results/ic_mu1_err.data") #MODIFICA
+    data_ci_mu2 = np.loadtxt("results/ic_mu1_err.data") #MODIFICA
+
+    ic_mu1 = data_ci_mu1[:,1]
+    ic_mu2 = data_ci_mu2[:,1]
+
 
     if __name__ == "__main__":
+        print(f"Configurazione con lambda = {lam} e cv = {cv}")
         # plot respone time
         fig, ax = plt.subplots()
         ax.set(xlabel='Number of servers N', ylabel='Time [s]')
         #plot_line(ax, 'o--', 'sample.data', 'Response Time', '#x', 'y', 'sigma(y)')
         
-        pts=list(range(15, 50))
-        plot_line(ax, '-', None, 'Theoretical curve mu=10', pts, [theoretical(x, 10) for x in pts])
-        plot_line(ax, '-', None, 'Theoretical curve mu=15', pts, [theoretical(x, 15) for x in pts])
+        # Inserisci il range dei possibili valori di N (ricordati che range esclude l'ultimo valore)
+        range_N_1 =list(range(30, 56)) #MODIFICA
+        range_N_2 =list(range(15, 56)) #MODIFICA
+        mu_1 = 8 #MODIFICA
+        mu_2 = 16 #MODIFICA
 
-        plot_line(ax, 'o--', None, 'Response time mu=10', pts_mu1, tr_mu1)
-        plot_line(ax, 'o--', None, 'Response time mu=15', pts_mu2, tr_mu2)
+        plot_line(ax, '-', None, f'Theoretical curve $\mu$={mu_1}', range_N_1, [theoretical(x,mu= mu_1) for x in range_N_1])
+        plot_line(ax, '-', None, f'Theoretical curve $\mu$={mu_2}', range_N_2, [theoretical(x,mu= mu_2) for x in range_N_2])
+
+        #Inserisci prima asse x e poi asse y (RIMUOVI IC_MU SE NON LO UTILIZZI)
+        plot_line(ax, 'o--', None, f'Response time $\mu$={mu_1}', N_mu1, life_time_mu1,ic_mu1)
+        plot_line(ax, 'o--', None, f'Response time $\mu$={mu_2}', N_mu2, life_time_mu2,ic_mu2)
+
+        #Per settare il range di valori nell'asse Y
+        ax.set_ylim(0, 1)
+
+        #Per settare una linea orizzontale rossa 
+        ax.axhline(y=0.250, color='red', linestyle='-', linewidth=1) #MODIFICA
         
-
         plt.legend()
-        # plt.savefig('sample.png')
         plt.show()
-   ```
+        #plt.savefig('sample.png')
+    ```
 ---
 # 10. Focus su Plot, file iper generico del prof
+
 ```python
 import matplotlib.pyplot as plt
 import numpy as np
