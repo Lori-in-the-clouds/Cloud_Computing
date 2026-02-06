@@ -172,6 +172,10 @@ extends = NOME_CONF_DA_ESTENDERE
 **.srv.serviceTime = 1.0s * lognormal(log(1.0(mu * sqrt(1 + cv^2))), sqrt(log(1 + cv^2)));
 **.srv.capacity = -1  # Coda infinita
 **.srv[*].busy.result-recording-modes = +timeavg #Utilizzazione del server (\rho)
+
+#--- PARAMETRI ROUTER ---
+#Utilizzato per instradare una percentuale di traffico 
+**.router.randomGateIndex=(uniform(0, 10.0) <= 6.0 ? 0 : 1)
 		
 #--- PARAMETRI DELAY ---
 **.delay.delay = uniform(0.1s, 0.2s)
