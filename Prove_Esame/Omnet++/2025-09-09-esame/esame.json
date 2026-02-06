@@ -1,0 +1,48 @@
+{
+    "scenario_schema": {
+        "label": {"pattern": "**.label", "type": "string"},
+        "N": {"pattern": "**.N", "type": "int"}
+    },
+    "metrics": {
+        "lifeTime": {"module": "**.sink", "scalar_name": "lifeTime:mean" ,"aggr": ["none"]},
+        "busyTime": {"module": "**.srv[*]", "scalar_name": "busy:timeavg" ,"aggr": ["none"]}
+    },
+
+    "analyses": {
+        "Fase_1_mu1": {
+            "outfile": "results/fase_1_mu1.data",
+            "scenarios": {
+                "fixed": {"label": "fase_1_mu1"},
+                "range": []
+            },
+            "metrics": [{"metric": "lifeTime", "aggr": "none"}, {"metric": "busyTime", "aggr": "none"}]
+        },
+
+        "Fase_1_mu2": {
+            "outfile": "results/fase_1_mu2.data",
+            "scenarios": {
+                "fixed": {"label": "fase_1_mu2" },
+                "range": []
+            },
+            "metrics": [{"metric": "lifeTime", "aggr": "none"}, {"metric": "busyTime", "aggr": "none"}]
+        },
+
+        "Fase_2_mu1": {
+            "outfile": "results/fase_2_mu1.data",
+            "scenarios": {
+                "fixed": {"label": "fase_2_mu1" },
+                "range": ["N"]
+            },
+            "metrics": [{"metric": "lifeTime", "aggr": "none"}, {"metric": "busyTime", "aggr": "none"}]
+        },
+
+        "Fase_2_mu2": {
+            "outfile": "results/fase_2_mu2.data",
+            "scenarios": {
+                "fixed": {"label": "fase_2_mu2" },
+                "range": ["N"]
+            },
+            "metrics": [{"metric": "lifeTime", "aggr": "none"}, {"metric": "busyTime", "aggr": "none"}]
+        }
+    }
+}
