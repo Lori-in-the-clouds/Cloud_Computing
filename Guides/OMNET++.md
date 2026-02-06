@@ -366,43 +366,63 @@ analyze_data.py -c nomeconfig.json -d database.db
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.stats import t
+from scipy.stats import norm
 import math
 
-data_mu1 = np.loadtxt("results/es1_mu1.data")
-data_mu2 = np.loadtxt("results/es1_mu2.data")
+SIM_TIME_LIMIT = 1000 # seconds
+REPETITIONS = 10
+N = 45 # Numero di Server
 
-def evaluate_price(total_busy_percentage, price_per_hour):
-    price_per_second = price_per_hour/3600
-    total_simulation_time = 1000
-    total_busy_time = total_simulation_time * total_busy_percentage # in seconds
+data_mu1 = np.loadtxt("results/fase_1_mu1.data")
+data_mu2 = np.loadtxt("results/fase_1_mu2.data")
 
-    total_price = total_busy_time * price_per_second
-    return total_price
+print("-----UTILIZZO-----")
+print(f"N = {N}")
+print(f"Ripetizioni per configurazione = {REPETITIONS}")
+print("------------------")
 
-def evaluate_ic(std_dev, confidence_level, n_replicas):
-    df = n_replicas - 1
-    alpha = 1 - (confidence_level / 100)
+#---COSTO DEL SISTEMA DURANTE IL PERIODO DI SIMULAZIONE (considerando N server)--
+def compute_cost_comparison(busy_percentage1,busy_percentage2,cost_per_hour1,cost_per_hour2, n = N):
+    costo_totale1 = busy_percentage1 * SIM_TIME_LIMIT * (cost_per_hour1 / 3600.0)
+    costo_totale2 = busy_percentage2 * SIM_TIME_LIMIT * (cost_per_hour2 / 3600.0)
+    print(f"Costo totale 1 -> {(costo_totale1 * n):.2f}")
+    print(f"Costo totale 2 -> {(costo_totale2 * n):.2f}") 
+
+def compute_cost(busy_percentage,cost_per_hour, n = N):
+    costo_totale = busy_percentage * SIM_TIME_LIMIT * (cost_per_hour / 3600.0)
+    print(f"Costo totale -> {costo_totale * n:.2f}")
+
+#---COSTO DEL SISTEMA IN UN ORA (considerando N server)---
+def compute_cost_comparison_hour(busy_percentage1,busy_percentage2,cost_per_hour1,cost_per_hour2, n = N):
+    costo_totale1 = busy_percentage1 * SIM_TIME_LIMIT * (cost_per_hour1 / 3600.0)
+    costo_totale2 = busy_percentage2 * SIM_TIME_LIMIT * (cost_per_hour2 / 3600.0)
+    print(f"Costo totale 1 in un ora -> {((costo_totale1 / SIM_TIME_LIMIT) * 3600 * n):.2f}$/hour")
+    print(f"Costo totale 2 in un ora -> {((costo_totale2 / SIM_TIME_LIMIT) * 3600 * n):.2f}$/hour") 
+
+def compute_cost_hour(busy_percentage,cost_per_hour, n = N):
+    costo_totale = busy_percentage * SIM_TIME_LIMIT * (cost_per_hour / 3600.0)
+    print(f"Costo totale in un ora -> {(costo_totale / SIM_TIME_LIMIT) * 3600 * n:.2f}$/hour")
+
+#n_repeat è il numero di run per configurazione
+def compute_CI(std, confidence_percentage,label=""):
+    df = REPETITIONS - 1
+    alpha = 1 - (confidence_percentage / 100)
     q = 1 - (alpha / 2)
     t_critical = t.ppf(q, df)
-    ic = t_critical * (std_dev / math.sqrt(n_replicas))
-    return ic
+    ic = t_critical * (std / math.sqrt(REPETITIONS))
+    return print(f"CI_{label} -> +-{(ic):.8f}")
 
-m1=data_mu1[0]
-d1=data_mu1[1]
-ic1 = evaluate_ic(d1, 65,10)
-print(f"d1 = {d1} and ic {ic1}")
-busy1=data_mu1[2]
-costo1 = evaluate_price(busy1, 1.5)
+std_1 = data_mu1[1]
+busy_1 = data_mu1[2]
 
-m2=data_mu2[0]
-d2=data_mu2[1]
-print(d2)
-ic2 = evaluate_ic(d2, 65,10)
-busy2=data_mu2[2]
-costo2 = evaluate_price(busy2, 1.5)
+std_2 = data_mu2[1]
+busy_2 = data_mu2[2]
 
-print(f"40 server in parallelo, tipologia1 --> Tr={m1*1000:.3f}+-{ic1*1000:.3f}ms, costo={costo1:.2f}$")
-print(f"40 server in parallelo, tipologia2 --> Tr={m2*1000:.3f}+-{ic2*1000:.3f}ms, costo={costo2:.2f}$")
+compute_CI(std=std_1, confidence_percentage=65,label="mu1")
+compute_CI(std=std_2, confidence_percentage=65,label="mu2")
+
+compute_cost_comparison(busy_percentage1=busy_1, busy_percentage2=busy_2, cost_per_hour1=1.5, cost_per_hour2=3)
+compute_cost_comparison_hour(busy_percentage1=busy_1, busy_percentage2=busy_2, cost_per_hour1=1.5, cost_per_hour2=3)
 ```
 ## 8.2. Caso con più configurazioni
 ```python
@@ -411,53 +431,68 @@ import numpy as np
 from scipy.stats import t
 import math
 
-data_mu1 = np.loadtxt("results/es3_mu1.data")
-data_mu2 = np.loadtxt("results/es3_mu2.data")
+SIM_TIME_LIMIT = 1000 # seconds
+REPETITIONS = 10
+N = 45 # Numero di Server
 
-def evaluate_ic(std_dev, confidence_level, n_replicas):
-    df = n_replicas - 1
-    alpha = 1 - (confidence_level / 100)
+#---COSTO DEL SISTEMA DURANTE IL PERIODO DI SIMULAZIONE (considerando N server)--
+def compute_cost_comparison(busy_percentage1,busy_percentage2,cost_per_hour1,cost_per_hour2, n = N):
+    costo_totale1 = busy_percentage1 * SIM_TIME_LIMIT * (cost_per_hour1 / 3600.0)
+    costo_totale2 = busy_percentage2 * SIM_TIME_LIMIT * (cost_per_hour2 / 3600.0)
+    print(f"Costo totale 1 -> {(costo_totale1 * n):.2f}")
+    print(f"Costo totale 2 -> {(costo_totale2 * n):.2f}") 
+
+def compute_cost(busy_percentage,cost_per_hour, n = N):
+    costo_totale = busy_percentage * SIM_TIME_LIMIT * (cost_per_hour / 3600.0)
+    print(f"Costo totale -> {costo_totale * n:.2f}")
+
+#---COSTO DEL SISTEMA IN UN ORA (considerando N server)---
+def compute_cost_comparison_hour(busy_percentage1,busy_percentage2,cost_per_hour1,cost_per_hour2, n = N):
+    costo_totale1 = busy_percentage1 * SIM_TIME_LIMIT * (cost_per_hour1 / 3600.0)
+    costo_totale2 = busy_percentage2 * SIM_TIME_LIMIT * (cost_per_hour2 / 3600.0)
+    print(f"Costo totale 1 in un ora -> {((costo_totale1 / SIM_TIME_LIMIT) * 3600 * n):.2f}$/hour")
+    print(f"Costo totale 2 in un ora -> {((costo_totale2 / SIM_TIME_LIMIT) * 3600 * n):.2f}$/hour") 
+
+def compute_cost_hour(busy_percentage,cost_per_hour, n = N):
+    costo_totale = busy_percentage * SIM_TIME_LIMIT * (cost_per_hour / 3600.0)
+    print(f"Costo totale in un ora -> {(costo_totale / SIM_TIME_LIMIT) * 3600 * n:.2f}$/hour")
+
+#n_repeat è il numero di run per configurazione
+def compute_CI(std, confidence_percentage,label=""):
+    df = REPETITIONS - 1
+    alpha = 1 - (confidence_percentage / 100)
     q = 1 - (alpha / 2)
     t_critical = t.ppf(q, df)
-    ic = t_critical * (std_dev / math.sqrt(n_replicas))
-    return ic
-
-def evaluate_price(total_busy_percentage, price_per_hour):
-    price_per_second = price_per_hour/3600
-    total_simulation_time = 1000
-    total_busy_time = total_simulation_time * total_busy_percentage # in seconds
-
-    total_price = total_busy_time * price_per_second
-    return total_price
+    ic = t_critical * (std / math.sqrt(REPETITIONS))
+    return print(f"CI_{label} -> +-{(ic):.8f}")
 
 print("server 1".center(50, "="))
 
-data = np.loadtxt("results/es3_mu1.data")
+data = np.loadtxt("results/fase_2_mu1.data")
 for row in range(data.shape[0]):
     row_data = data[row,:]
 
     n = row_data[0]
-    m=row_data[1]
-    d=row_data[2]
-    ic = evaluate_ic(d, 65, 10)
-    busy=row_data[3]
-    costo = evaluate_price(busy, 1.5)
-    print(f"{int(n)} tipologia1 --> Tr={m*1000:.3f}+-{ic*1000:.3f}ms, costo={costo:.5f}$")
+    std = row_data[2]
+    busy = row_data[3]
 
-print("\n\n")
+
+    ic = compute_CI(std,65,label=str(n))
+    compute_cost_hour(busy_percentage=busy,cost_per_hour=1.5,n=n)
+
+print("\n")
 print("server 2".center(50, "="))
 
-data = np.loadtxt("results/es3_mu2.data")
+data = np.loadtxt("results/fase_2_mu2.data")
 for row in range(data.shape[0]):
     row_data = data[row,:]
 
     n = row_data[0]
-    m=row_data[1]
-    d=row_data[2]
-    ic = evaluate_ic(d, 65, 10)
-    busy=row_data[3]
-    costo = evaluate_price(busy, 1.5)
-    print(f"{int(n)} tipologia2 --> Tr={m*1000:.3f}+-{ic*1000:.3f}ms, costo={costo:.5f}$")
+    std = row_data[2]
+    busy = row_data[3]
+
+    ic = compute_CI(std,65,label=str(n))
+    compute_cost_hour(busy_percentage=busy,cost_per_hour=3,n=n)
 ```
 ---
 # 9. Plottiamo i dati con plotlib 
