@@ -647,8 +647,8 @@ for row in range(data.shape[0]):
         ax.axhline(y=0.250, color='red', linestyle='-', linewidth=1) #MODIFICA
         
         plt.legend()
-        plt.show()
         #plt.savefig('sample.png')
+        plt.show()
     ```
 ---
 # 10. Focus su Plot, file iper generico del prof
