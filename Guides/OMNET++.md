@@ -104,6 +104,7 @@ import org.omnetpp.queueing.Source;
 import org.omnetpp.queueing.Router;
 import org.omnetpp.queueing.Queue;
 import org.omnetpp.queueing.Sink;
+import org.omnetpp.queueing.Delay;
 
 network esame {
 
@@ -133,6 +134,14 @@ network esame {
 		//src[i].out --> delay[i].in++;
         //delay[i].out --> srv[i].in++;
 	    //} per fare cicli
+
+        //MAPPA di Ingressi/Uscite
+        //source -> out; 
+        //queue -> in[]; out;
+        //router -> in[]; out[];
+        //sink -> in[];
+        //delay -> in[], out;
+
 }
 ```
 # 2. Creazione file `ini.mako`:
@@ -229,6 +238,7 @@ Per convertire i file di output `.sca` in un database SQLite, si utilizza un fil
 ```json
 {
     "scenario_schema": {
+        "label": {"pattern": "**.label", "type": "string"},
         "Balance": {"pattern": "**.Balance", "type": "string"},
         "lambda1": {"pattern": "**.lambda1", "type": "real"},
         "lambda2": {"pattern": "**.lambda2", "type": "real"},
@@ -373,8 +383,8 @@ from scipy.stats import t
 from scipy.stats import norm
 import math
 
-SIM_TIME_LIMIT = 1000 # seconds
-REPETITIONS = 10
+SIM_TIME_LIMIT = 10000 # seconds
+REPETITIONS = 5
 N = 45 # Numero di Server
 
 data_mu1 = np.loadtxt("results/fase_1_mu1.data")
@@ -386,7 +396,7 @@ print(f"Ripetizioni per configurazione = {REPETITIONS}")
 print("------------------")
 
 # --- COSTO DI NOLEGGIO FISSO ---
-def compute_rental_cost_comparison(n=N, cost_per_hour1, cost_per_hour2):
+def compute_rental_cost_comparison(cost_per_hour1, cost_per_hour2, n = N):
     """Calcola il costo basato solo sul numero di server affittati """
     costo_fisso1 = n * cost_per_hour1
     costo_fisso2 = n * cost_per_hour2
@@ -394,7 +404,7 @@ def compute_rental_cost_comparison(n=N, cost_per_hour1, cost_per_hour2):
     print(f"Costo Noleggio Fisso Tipo 2 (N={n}) -> {costo_fisso2:.2f}$/hour")
     return costo_fisso1, costo_fisso2
 
-def compute_rental_cost(n=N, cost_per_hour):
+def compute_rental_cost(cost_per_hour, n = N):
     """Calcola il costo basato solo sul numero di server affittati """
     costo_fisso = n * cost_per_hour
     print(f"Costo Noleggio Fisso Tipo  (N={n}) -> {costo_fisso:.2f}$/hour")
@@ -452,8 +462,8 @@ import numpy as np
 from scipy.stats import t
 import math
 
-SIM_TIME_LIMIT = 1000 # seconds
-REPETITIONS = 10
+SIM_TIME_LIMIT = 10000 # seconds
+REPETITIONS = 5
 N = 45 # Numero di Server
 
 #---COSTO DEL SISTEMA DURANTE IL PERIODO DI SIMULAZIONE (considerando N server)--
@@ -658,11 +668,14 @@ for row in range(data.shape[0]):
         plot_line(ax, '-', None, f'Theoretical curve $\mu$={mu_2}', range_N_2, [theoretical(x,mu= mu_2) for x in range_N_2])
 
         #Inserisci prima asse x e poi asse y (RIMUOVI IC_MU SE NON LO UTILIZZI)
-        plot_line(ax, 'o--', None, f'Response time $\mu$={mu_1}', N_mu1, life_time_mu1,ic_mu1)
-        plot_line(ax, 'o--', None, f'Response time $\mu$={mu_2}', N_mu2, life_time_mu2,ic_mu2)
+        plot_line(ax, 'o--', None, f'Response time $\mu$={mu_1}', N_mu1, life_time_mu1,ic_mu1 * 2)
+        plot_line(ax, 'o--', None, f'Response time $\mu$={mu_2}', N_mu2, life_time_mu2,ic_mu2 * 2)
+        #N.B. La funzione ti richide tutto l'intervallo di certezza, quindi l'IC devi moltiplicarlo per 2
 
         #Per settare il range di valori nell'asse Y
         ax.set_ylim(0, 1)
+        #Per settare i valori sull'asse Y
+        ax.set_yticks([0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9])
 
         #Per settare una linea orizzontale rossa 
         ax.axhline(y=0.250, color='red', linestyle='-', linewidth=1) #MODIFICA
