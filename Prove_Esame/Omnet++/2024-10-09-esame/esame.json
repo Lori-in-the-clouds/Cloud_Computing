@@ -1,0 +1,35 @@
+{
+    "scenario_schema": {
+        "label": {"pattern": "**.label", "type": "string"},
+        "f_l": {"pattern": "**.f_l", "type": "double"}
+
+    },
+    "metrics": {
+        "ServiceTime": {"module": "**.sink", "scalar_name": "lifeTime:mean" ,"aggr": ["none"]}
+
+    },
+
+    "analyses": {
+       "Fase_1": {
+            "outfile": "results/fase_1.data",
+            "scenarios": {
+                "fixed": {"label": "Fase1"},
+                "range": []
+            },
+            "metrics": [
+                        {"metric": "ServiceTime", "aggr": "none"}
+                    ]
+        },
+
+        "Fase_2": {
+            "outfile": "results/fase_2.data",
+            "scenarios": {
+                "fixed": {"label": "Fase2"},
+                "range": ["f_l"]
+            },
+            "metrics": [
+                        {"metric": "ServiceTime", "aggr": "none"}
+                    ]
+        }
+    }
+}
