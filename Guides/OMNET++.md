@@ -97,6 +97,7 @@ Questo file viene utilizzato per definire la struttura della rete. I componenti 
 * [Queue](components_omnet/queue.md): viene posta prima del server e viene utilizzata per valutare il tempo in cui le task restano in attesa prima di essere processati.
 * [Delay](components_omnet/delay.md): è un tempo fisso che viene applicato ad ogni task per simulare delle operazioni. 
 * [Sink](components_omnet/sink.md): corrisponde all'output della network e viene utilizzato per calcolare alcune statistiche di performance.
+* [Classifier](components_omnet/classifier.md): modulo di instradamento utilizzato per smistare i pacchetti (job) in arrivo verso diverse uscite sulla base di attributi specifici del pacchetto stesso.
 
 Il **`file.ned`**:
 ```ned
@@ -255,7 +256,7 @@ Per convertire i file di output `.sca` in un database SQLite, si utilizza un fil
         "lambda2": {"pattern": "**.lambda2", "type": "real"}
     },
     "metrics": {
-        "ServiceTime": {"module": "**.sink", "scalar_name": "lifeTime:mean" ,"aggr": ["none"]},
+        "LifeTime": {"module": "**.sink", "scalar_name": "lifeTime:mean" ,"aggr": ["none"]},
         "PQueue": {"module": "**.sink", "scalar_name": "queuesVisited:mean" ,"aggr": ["none"]},
         "ServiceTime": {"module": "**.sink", "scalar_name": "totalServiceTime:mean" ,"aggr": ["none"]},
         "WaitingTime": {"module": "**.sink", "scalar_name": "totalQueueingTime:mean" ,"aggr": ["none"]},

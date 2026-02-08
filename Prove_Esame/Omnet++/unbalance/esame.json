@@ -1,0 +1,48 @@
+{
+    "scenario_schema": {
+        "label": {"pattern": "**.label", "type": "string"},
+        "sigma": {"pattern": "**.sigma", "type": "int"}
+
+    },
+    "metrics": {
+        "LifeTime_mean_low": {"module": "**.sink_low", "scalar_name": "lifeTime:mean" ,"aggr": ["none"]},
+        "LifeTime_mean_high": {"module": "**.sink_high", "scalar_name": "lifeTime:mean" ,"aggr": ["none"]},
+        "LifeTime_max_low": {"module": "**.sink_low", "scalar_name": "lifeTime:max" ,"aggr": ["none"]},
+        "LifeTime_max_high": {"module": "**.sink_high", "scalar_name": "lifeTime:max" ,"aggr": ["none"]},
+        "BusyTime_low": {"module": "**.srv_low", "scalar_name": "busy:timeavg" ,"aggr": ["none"]},
+        "BusyTime_high": {"module": "**.srv_high", "scalar_name": "busy:timeavg" ,"aggr": ["none"]}
+    },
+    "analyses": {
+        "Fase1": {
+            "outfile": "results/fase_1.data",
+            "scenarios": {
+                "fixed": {"label": "fase_1"},
+                "range": ["sigma"]
+            },
+            "metrics": [
+                        {"metric": "LifeTime_mean_low", "aggr": "none"},
+                        {"metric": "LifeTime_mean_high", "aggr": "none"},
+                        {"metric": "LifeTime_max_low", "aggr": "none"},
+                        {"metric": "LifeTime_max_high", "aggr": "none"},
+                        {"metric": "BusyTime_low", "aggr": "none"},
+                        {"metric": "BusyTime_high", "aggr": "none"}
+                    ]
+        },
+
+        "Fase2": {
+            "outfile": "results/fase_2.data",
+            "scenarios": {
+                "fixed": {"label": "fase_2"},
+                "range": ["sigma"]
+            },
+            "metrics": [
+                        {"metric": "LifeTime_mean_low", "aggr": "none"},
+                        {"metric": "LifeTime_mean_high", "aggr": "none"},
+                        {"metric": "LifeTime_max_low", "aggr": "none"},
+                        {"metric": "LifeTime_max_high", "aggr": "none"},
+                        {"metric": "BusyTime_low", "aggr": "none"},
+                        {"metric": "BusyTime_high", "aggr": "none"}
+                    ]
+        }
+    }
+}
