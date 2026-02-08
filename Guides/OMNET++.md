@@ -117,7 +117,10 @@ network esame {
         srv.capacity = K;
         srv.serviceTime = 1s * exponential(1 / mu);
         src.interArrivalTime = 1s * exponential(1 / lambda);
-        //src[*].interArrivalTime = exponential(1s/lambda)
+        //src[*].interArrivalTime = exponential(1s/lambda);
+        //srv.serviceTime = 1s * exponential(1 / mu);
+        //r.routingAlgorithm="random";
+        
 
     submodules:
 		//src: Source;
@@ -169,6 +172,12 @@ sim-time-limit = 10000s
 [Config CONF_2]
 extends = NOME_CONF_DA_ESTENDERE
 
+%for i in [33,34,35,36,37,38,39,40]:
+[Config CONF_${i}]
+
+%endfor
+
+
 
 #--- PARAMETRI SOURCE ---
 # Usiamo il wildcard [*] per prendere tutti i sink
@@ -178,7 +187,7 @@ extends = NOME_CONF_DA_ESTENDERE
 
 #--- PARAMETRI QUEUE ---
 **.srv.serviceTime = 1s * exponential(1 / **mu) #Quanto tempo il server impiega per elaborare un job
-**.srv.serviceTime = 1.0s * lognormal(log(1.0(mu * sqrt(1 + cv^2))), sqrt(log(1 + cv^2)));
+**.srv.serviceTime = 1.0s * lognormal(log(1.0 / (mu * sqrt(1 + cv^2))), sqrt(log(1 + cv^2)));
 **.srv.capacity = -1  # Coda infinita
 **.srv[*].busy.result-recording-modes = +timeavg #Utilizzazione del server (\rho)
 
@@ -239,21 +248,18 @@ Per convertire i file di output `.sca` in un database SQLite, si utilizza un fil
 {
     "scenario_schema": {
         "label": {"pattern": "**.label", "type": "string"},
+        "mu1": {"pattern": "**.mu1", "type": "real"},
+        "mu2": {"pattern": "**.mu2", "type": "real"},
         "Balance": {"pattern": "**.Balance", "type": "string"},
         "lambda1": {"pattern": "**.lambda1", "type": "real"},
-        "lambda2": {"pattern": "**.lambda2", "type": "real"},
-        "mu1": {"pattern": "**.mu1", "type": "real"},
-        "mu2": {"pattern": "**.mu2", "type": "real"}
+        "lambda2": {"pattern": "**.lambda2", "type": "real"}
     },
     "metrics": {
-        "PQueue1": {"module": "**.sink1", "scalar_name": "queuesVisited:mean" ,"aggr": ["none"]},
-        "ServiceTime1": {"module": "**.sink1", "scalar_name": "totalServiceTime:mean" ,"aggr": ["none"]},
-        "WaitingTime1": {"module": "**.sink1", "scalar_name": "totalQueueingTime:mean" ,"aggr": ["none"]},
-        "ResponseTime1": {"module": "**.sink1", "scalar_name": "lifeTime:mean" ,"aggr": ["none"]},
-        "PQueue2": {"module": "**.sink2", "scalar_name": "queuesVisited:mean" ,"aggr": ["none"]},
-        "ServiceTime2": {"module": "**.sink2", "scalar_name": "totalServiceTime:mean" ,"aggr": ["none"]},
-        "WaitingTime2": {"module": "**.sink2", "scalar_name": "totalQueueingTime:mean" ,"aggr": ["none"]},
-        "ResponseTime2": {"module": "**.sink2", "scalar_name": "lifeTime:mean" ,"aggr": ["none"]}
+        "ServiceTime": {"module": "**.sink", "scalar_name": "lifeTime:mean" ,"aggr": ["none"]},
+        "PQueue": {"module": "**.sink", "scalar_name": "queuesVisited:mean" ,"aggr": ["none"]},
+        "ServiceTime": {"module": "**.sink", "scalar_name": "totalServiceTime:mean" ,"aggr": ["none"]},
+        "WaitingTime": {"module": "**.sink", "scalar_name": "totalQueueingTime:mean" ,"aggr": ["none"]},
+        "BusyTime": {"module": "**.srv[*]", "scalar_name": "busy:timeavg" ,"aggr": ["none"]}
     },
     "histograms": {
         "SinkTime1": {"module": "**.sink1", "histogram_name": "lifeTime:histogram"},
@@ -289,21 +295,21 @@ I dati del database `.db` vengono analizzati per generare i file `.data` definit
         ...
     },
     "analyses": {
-       "SensRho-Kinf": {
-            "outfile": "results/loadcurve_inf.data",
+       "Fase1": {
+            "outfile": "results/fase_1.data",
             "scenarios": {
-                "fixed": {"K": "-1"},
-                "range": ["rho"]
+                "fixed": {"label": "fase_1"},
+                "range": []
             },
             "metrics": [
                         {"metric": "TotalJobs", "aggr": "none"},
                         {"metric": "DroppedJobs", "aggr": "none"}
                     ]
         },
-        "SensRho-K10": {
-            "outfile": "results/loadcurve_K10.data",
+        "Fase2": {
+            "outfile": "results/fase_2.data",
             "scenarios": {
-                "fixed": {"K": "10"},
+                "fixed": {"label": "fase_2"},
                 "range": ["rho"]
             },
             "metrics": [
