@@ -652,7 +652,7 @@ for row in range(data.shape[0]):
 
     #Per ricavare il CI
     data_ci_mu1 = np.loadtxt("results/ic_mu1_err.data") #MODIFICA
-    data_ci_mu2 = np.loadtxt("results/ic_mu1_err.data") #MODIFICA
+    data_ci_mu2 = np.loadtxt("results/ic_mu2_err.data") #MODIFICA
 
     ic_mu1 = data_ci_mu1[:,1]
     ic_mu2 = data_ci_mu2[:,1]

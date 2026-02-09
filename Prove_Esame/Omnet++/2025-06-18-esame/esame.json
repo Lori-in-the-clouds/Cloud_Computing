@@ -1,0 +1,52 @@
+{
+    "scenario_schema": {
+        "label": {"pattern": "**.label", "type": "string"},
+        "N": {"pattern": "**.N", "type": "real"}
+    },
+    "metrics": {
+        "LifeTime": {"module": "**.sink", "scalar_name": "lifeTime:mean" ,"aggr": ["none"]}
+    },
+
+    "analyses": {
+       "Fase1_mu1": {
+            "outfile": "results/fase_1_mu1.data",
+            "scenarios": {
+                "fixed": {"label": "F1_mu1"},
+                "range": []
+            },
+            "metrics": [
+                        {"metric": "LifeTime", "aggr": "none"}
+                    ]
+        },
+        "Fase1_mu2": {
+            "outfile": "results/fase_1_mu2.data",
+            "scenarios": {
+                "fixed": {"label": "F1_mu2"},
+                "range": []
+            },
+            "metrics": [
+                {"metric": "LifeTime", "aggr": "none"}
+                ]
+        },
+       "Fase2_mu1": {
+            "outfile": "results/fase_2_mu1.data",
+            "scenarios": {
+                "fixed": {"label": "F2_mu1"},
+                "range": ["N"]
+            },
+            "metrics": [
+                        {"metric": "LifeTime", "aggr": "none"}
+                    ]
+        },
+        "Fase2_mu2": {
+            "outfile": "results/fase_2_mu2.data",
+            "scenarios": {
+                "fixed": {"label": "F2_mu2"},
+                "range": ["N"]
+            },
+            "metrics": [
+                {"metric": "LifeTime", "aggr": "none"}
+                ]
+        }
+    }
+}
