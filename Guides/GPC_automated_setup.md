@@ -638,6 +638,16 @@
     gcloud services enable appengine.googleapis.com cloudbuild.googleapis.com firestore.googleapis.com pubsub.googleapis.com
     gcloud app create --project=${PROJECT_ID}
     ```
+7. **Generiamo il Service Account e le chiavi IAM per l'autenticazione:**
+    ```bash
+    export NAME=webuser
+    gcloud iam service-accounts create ${NAME}
+    gcloud projects add-iam-policy-binding ${PROJECT_ID} --member "serviceAccount:${NAME}@${PROJECT_ID}.iam.gserviceaccount.com" --role "roles/owner" 
+    touch credentials.json 
+    gcloud iam service-accounts keys create credentials.json --iam-account ${NAME}@${PROJECT_ID}.iam.gserviceaccount.com 
+    export GOOGLE_APPLICATION_CREDENTIALS="$(pwd)/credentials.json"
+    ```
+    **$\color{red}{\text{N.B.}}$** Il nome `NAME` deve essere senza trattini.
 ---
 
 **➡️ Continua con il Capitolo 2 nella sezione dedicata a Google Cloud Platform: [📂 View Guide](GCP.md#2-configurazione-firestone)**

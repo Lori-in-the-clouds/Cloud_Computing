@@ -65,9 +65,7 @@
     gcloud services enable appengine.googleapis.com cloudbuild.googleapis.com firestore.googleapis.com pubsub.googleapis.com
     gcloud app create --project=${PROJECT_ID}
     ```
----
-# 2. Configurazione Firestone
-1. **Creazione del Database Firestone:**
+10. **Generiamo il Service Account e le chiavi IAM per l'autenticazione:**
     ```bash
     export NAME=webuser
     gcloud iam service-accounts create ${NAME}
@@ -77,6 +75,9 @@
     export GOOGLE_APPLICATION_CREDENTIALS="$(pwd)/credentials.json"
     ```
     **$\color{red}{\text{N.B.}}$** Il nome `NAME` deve essere senza trattini.
+---
+# 2. Configurazione Firestone
+1. **Creiamo il database Firestone in Gcloud Platform: [link](https://console.cloud.google.com/welcome/new?hl=it).**
 2. **Creiamo il file `db.json`:**
     ```json
     [
@@ -85,8 +86,7 @@
         {"id": "blue", "red": 0, "green": 0, "blue": 255}
     ]
     ```
-3. **Creiamo il database Firestone in Gcloud Platform: [link](https://console.cloud.google.com/welcome/new?hl=it).**
-4. **Creiamo il file `file_firestone.py`:** usato per gestire la creazione/modifica/eliminazione dei dati.
+3. **Creiamo il file `file_firestone.py`:** usato per gestire la creazione/modifica/eliminazione dei dati.
 
     ```python
     from google.cloud import firestore
@@ -777,196 +777,204 @@ Le function sono delle Action che vengono eseguite in risposta al verificarsi 
             ```
 ---
 # 7. PubSub
-Analizziamo due casi:
-* **Caso in cui i nomi del Topic e della Subscription sono noti a priori:**
-  1.  Settiamo le variabili di ambiente (devono essere settate in tutti i terminali che utilizziamo):
+## 7.1. Caso in cui i nomi del Topic e della Subscription sono noti a priori
+1. **Settiamo le variabili di ambiente (devono essere settate in tutti i terminali che utilizziamo):**
    
-        ```bash
-        export PROJECT_ID="PROJECT_NAME"
-        export TOPIC_NAME="TOPIC_NAME"
-        export SUBSCRIPTION_NAME="SUBSCRIPTION_NAME"
-        ````
-        Per controllare tutte le variabili:
-        ```bash
-        echo $PROJECT_ID
-        echo $TOPIC_NAME
-        echo $SUBSCRIPTION_NAME
-        ````
-   2. Creiamo il topic e la subscription su gcloud:
-        ```bash
-        gcloud pubsub topics create $TOPIC_NAME
-        gcloud pubsub subscriptions create $SUBSCRIPTION_NAME --topic=$TOPIC_NAME
-        ````
+    ```bash
+    export PROJECT_ID="PROJECT_NAME"
+    export TOPIC_NAME="TOPIC_NAME"
+    export SUBSCRIPTION_NAME="SUBSCRIPTION_NAME"
+    ````
+    Per controllare tutte le variabili:
+    ```bash
+    echo $PROJECT_ID
+    echo $TOPIC_NAME
+    echo $SUBSCRIPTION_NAME
+    ````
+    Verificare in ogni ciascun terminale che utilizziamo di aver esportato le credenziali:
+    ```bash
+    export GOOGLE_APPLICATION_CREDENTIALS="$(pwd)/credentials.json"
+    ```
+2. **Creiamo il topic e la subscription su gcloud:**
+    ```bash
+    gcloud pubsub topics create $TOPIC_NAME
+    gcloud pubsub subscriptions create $SUBSCRIPTION_NAME --topic=$TOPIC_NAME
+    ````
 
-    3. Scriviamo il codice del pub e del sub:
+3. **Scriviamo il codice del pub e del sub:**
 
-       * **Codice del publisher:** il Publisher non è quasi mai un file a sé stante che lanci separatamente. È una funzione integrata nel tuo codice principale.
-     
-           ```python
-           import os
-           import json
-           from google.cloud import firestore
-           from google.cloud import pubsub_v1
-           ```
-           Inizializziamo il publisher:
-           ```python
-           publisher = pubsub_v1.PublisherClient()
-           topic_path = publisher.topic_path(os.environ['PROJECT_ID'], os.environ['TOPIC_NAME']) 
-           ```
-           Appena ricevi i dati che devi notifare, utilizziamo il seguente codice:
-            ```python
-           data={'key1': 'value1', 'key2': 'value2'}
-           res = publisher.publish(topic_path, json.dumps(data).encode('utf-8'))
-           ```       
-       * **`subscriber.py`:**
-           ```python
-           import os
-           import sys
-           import json
-           from google.cloud import pubsub_v1
-           from google.cloud import firestore
-
-           project_id = os.environ['PROJECT_ID']
-           sub_name = os.environ['SUBSCRIPTION_NAME']
-
-           subscriber = pubsub_v1.SubscriberClient()
-           sub_path = subscriber.subscription_path(project_id, sub_name)
-
-           # Se vuoi legger qualcosa passata per linea di comando
-           cap_interessati = sys.argv[1:] 
-
-           #Funzione che scatta automaticamente quando arriva un mesaggio
-           def callback(message):
-
-               dati = json.loads(message.data.decode('utf-8'))
-               value1 = dati.get('key1')
-               value2 = dati.get('key2')
-               message.ack() #Conferma la ricezione
-
-               #if not cap_interessati or str(cap_messaggio) in cap_interessati:
-               print("Abbiamo ricevuto....")
-
-           if __name__ == '__main__':
-               print("Tentativo di avvio del Subscriber...")
-               pull = subscriber.subscribe(sub_path, callback=callback)
-               try:
-                   print(f"In ascolto su {sub_path}...")
-                   pull.result()
-               except Exception as e:
-                   # Se c'è un errore (es. permessi, nomi sbagliati), ora lo vedrai scritto!
-                   print(f"❌ Il subscriber si è fermato per un errore: {e}")
-                   pull.cancel()
-               except KeyboardInterrupt:
-                   # Questo serve per quando premi Ctrl+C
-                   pull.cancel()
-                   print("\n🛑 Subscriber fermato manualmente.")
-           ```
-
-  2. In un terminale far partire il pub (va bene anche in locale)
-  3. In un altro terminale fai partire il sub
-* **Caso in cui dobbbiamo definire dinamicamente i nomi dei Topic e delle Subscription:**
-
-  1. **Template `publisher`:** questo codice va inserito dove nascono i dati (es. `api.py`). La funzione chiave è `publish_message`: gestisce da sola la creazione del topic se non esiste e l'invio del messaggio.
+    * **Codice `publisher`:** il Publisher non è quasi mai un file a sé stante che lanci separatamente. È una funzione integrata nel tuo codice principale.
+    
         ```python
         import os
+        import json
+        from google.cloud import firestore
         from google.cloud import pubsub_v1
 
-        # Configurazione Globale
-        PROJECT_ID = os.environ.get('PROJECT_ID')
+        #Inizializziamo il publisher
         publisher = pubsub_v1.PublisherClient()
+        topic_path = publisher.topic_path(os.environ['PROJECT_ID'], os.environ['TOPIC_NAME']) 
 
-        def publish_message(topic_name, message_string):
-            """
-            1. Pulisce il nome del topic.
-            2. Crea il topic se non esiste.
-            3. Invia il messaggio.
-            """
-            # Costruzione percorso completo: projects/{id}/topics/{nome}
-            topic_path = publisher.topic_path(PROJECT_ID, topic_name)
-            
-            # 2. Logica "Get or Create" (Idempotenza)
-            try:
-                publisher.get_topic(request={"topic": topic_path})
-            except Exception:
-                print(f"Creating topic {topic_name}...")
-                publisher.create_topic(name=topic_path)
+        data={'key1': 'value1', 'key2': 'value2'}
+        future = publisher.publish(topic_path, json.dumps(data).encode('utf-8'))
+        
+        try:
+            message_id = future.result()
+            print(f"✅ Messaggio inviato con ID: {message_id}")
+        except Exception as e:
+            print(f"❌ Errore durante l'invio: {e}")
 
-            # 3. Pubblicazione (Importante: encode in bytes!)
-            future = publisher.publish(topic_path, data=message_string.encode("utf-8"))
-            
-            return future.result() # Restituisce l'ID del messaggio pubblicato
-
-        # --- ESEMPIO DI UTILIZZO ---
-        # publish_message("cartolina", "id-12345")
+        time.sleep(0.5)
         ```
-  2. **Template `subscriber`:**
-  
+    * **`subscriber.py`:**
         ```python
         import os
         import sys
-        import uuid
+        import json
         from google.cloud import pubsub_v1
+        from google.cloud import firestore
 
-        # --- CONFIGURAZIONE ---
-        PROJECT_ID = os.environ.get('PROJECT_ID')
+        project_id = os.environ['PROJECT_ID']
+        sub_name = os.environ['SUBSCRIPTION_NAME']
 
-        # Argomenti da riga di comando (es: python3 worker.py nome_topic)
-        if len(sys.argv) < 2:
-            print("Errore: specifica il topic da ascoltare.")
-            sys.exit(1)
-
-        topic_name = sys.argv[1]
-
-        # 1. Setup Percorsi
-        topic_path = f"projects/{PROJECT_ID}/topics/{topic_name}"
-
-        # Generiamo un nome sottoscrizione casuale (es. sub-cartolina-xf32s)
-        sub_name = f"sub-{topic_name}-{str(uuid.uuid4())[:8]}"
-        subscription_path = f"projects/{PROJECT_ID}/subscriptions/{sub_name}"
-
-        # 2. Inizializzazione Client
         subscriber = pubsub_v1.SubscriberClient()
+        sub_path = subscriber.subscription_path(project_id, sub_name)
 
-        # Creazione Sottoscrizione Effimera
-        print(f"Creazione sottoscrizione: {sub_name} su topic: {topic_clean}")
-        try:
-            subscriber.create_subscription(request={"name": subscription_path, "topic": topic_path})
-        except Exception as e:
-            print(f"Errore creazione subscription (forse il topic non esiste?): {e}")
-            sys.exit(1)
+        # Se vuoi legger qualcosa passata per linea di comando
+        cap_interessati = sys.argv[1:] 
 
-        # 3. La Callback (Cosa fare quando arriva un messaggio)
-        def callback(message_obj):
-            # IMPORTANTE: Decodifica i dati
-            content = message_obj.data.decode("utf-8")
-            print(f"📩 Ricevuto: {content}")
-            
-            # --- SPAZIO PER LA TUA LOGICA ---
-            # Esempio: db.get_element("collection", content)
-            # --------------------------------
-            
-            # Conferma ricezione (altrimenti PubSub lo rimanda all'infinito)
-            message_obj.ack()
+        #Funzione che scatta automaticamente quando arriva un mesaggio
+        def callback(message):
 
-        # 4. Loop di Ascolto e Pulizia
-        streaming_pull_future = subscriber.subscribe(subscription_path, callback=callback)
-        print(f"In ascolto... (Ctrl+C per chiudere)")
+            dati = json.loads(message.data.decode('utf-8'))
+            value1 = dati.get('key1')
+            value2 = dati.get('key2')
+            message.ack() #Conferma la ricezione
 
-        with subscriber:
+            #if not cap_interessati or str(cap_messaggio) in cap_interessati:
+            print("Abbiamo ricevuto....")
+
+        if __name__ == '__main__':
+            print("Tentativo di avvio del Subscriber...")
+            pull = subscriber.subscribe(sub_path, callback=callback)
             try:
-                # Mantiene lo script vivo
-                streaming_pull_future.result()
+                print(f"In ascolto su {sub_path}...")
+                pull.result()
+            except Exception as e:
+                # Se c'è un errore (es. permessi, nomi sbagliati), ora lo vedrai scritto!
+                print(f"❌ Il subscriber si è fermato per un errore: {e}")
+                pull.cancel()
             except KeyboardInterrupt:
-                print("\nChiusura richiesta dall'utente...")
-                streaming_pull_future.cancel()
-            finally:
-                # PULIZIA FINALE: Cancella la sottoscrizione
-                print("Eliminazione sottoscrizione temporanea...")
-                subscriber.delete_subscription(request={"subscription": subscription_path})
-                print("Fatto. Ciao!")
+                # Questo serve per quando premi Ctrl+C
+                pull.cancel()
+                print("\n🛑 Subscriber fermato manualmente.")
         ```
-  3. In un terminale far partire il pub (va bene anche in locale).
-  4. In un altro terminale fai partire il sub.
+
+3. **In un terminale far partire il pub (va bene anche in locale)**
+4. **In un altro terminale fai partire il sub**
+
+## 7.2. Caso in cui dobbbiamo definire dinamicamente i nomi dei Topic e delle Subscription
+
+1. **Template `publisher`:** questo codice va inserito dove nascono i dati (es. `api.py`). La funzione chiave è `publish_message`: gestisce da sola la creazione del topic se non esiste e l'invio del messaggio.
+    ```python
+    import os
+    from google.cloud import pubsub_v1
+
+    # Configurazione Globale
+    PROJECT_ID = os.environ.get('PROJECT_ID')
+    publisher = pubsub_v1.PublisherClient()
+
+    def publish_message(topic_name, message_string):
+        """
+        1. Crea il topic se non esiste.
+        2. Invia il messaggio.
+        """
+        # Costruzione percorso completo: projects/{id}/topics/{nome}
+        topic_path = publisher.topic_path(PROJECT_ID, topic_name)
+        
+        # 2. Logica "Get or Create" (Idempotenza)
+        try:
+            publisher.get_topic(request={"topic": topic_path})
+        except Exception:
+            print(f"Creating topic {topic_name}...")
+            publisher.create_topic(name=topic_path)
+
+        # 3. Pubblicazione (Importante: encode in bytes!)
+        future = publisher.publish(topic_path, data=message_string.encode("utf-8"))
+        
+        return future.result() # Restituisce l'ID del messaggio pubblicato
+
+    # --- ESEMPIO DI UTILIZZO ---
+    # publish_message("cartolina", "id-12345")
+    ```
+2. **Template `subscriber`:**
+
+    ```python
+    import os
+    import sys
+    import uuid
+    from google.cloud import pubsub_v1
+
+    # --- CONFIGURAZIONE ---
+    PROJECT_ID = os.environ.get('PROJECT_ID')
+
+    # Argomenti da riga di comando (es: python3 worker.py nome_topic)
+    if len(sys.argv) < 2:
+        print("Errore: specifica il topic da ascoltare.")
+        sys.exit(1)
+
+    topic_name = sys.argv[1]
+
+    # 1. Setup Percorsi
+    topic_path = f"projects/{PROJECT_ID}/topics/{topic_name}"
+
+    # Generiamo un nome sottoscrizione casuale (es. sub-cartolina-xf32s)
+    sub_name = f"sub-{topic_name}-{str(uuid.uuid4())[:8]}"
+    subscription_path = f"projects/{PROJECT_ID}/subscriptions/{sub_name}"
+
+    # 2. Inizializzazione Client
+    subscriber = pubsub_v1.SubscriberClient()
+
+    # Creazione Sottoscrizione Effimera
+    print(f"Creazione sottoscrizione: {sub_name} su topic: {topic_path}")
+    try:
+        subscriber.create_subscription(request={"name": subscription_path, "topic": topic_path})
+    except Exception as e:
+        print(f"Errore creazione subscription (forse il topic non esiste?): {e}")
+        sys.exit(1)
+
+    # 3. La Callback (Cosa fare quando arriva un messaggio)
+    def callback(message_obj):
+        # IMPORTANTE: Decodifica i dati
+        content = message_obj.data.decode("utf-8")
+        print(f"📩 Ricevuto: {content}")
+        
+        # --- SPAZIO PER LA TUA LOGICA ---
+        # Esempio: db.get_element("collection", content)
+        # --------------------------------
+        
+        # Conferma ricezione (altrimenti PubSub lo rimanda all'infinito)
+        message_obj.ack()
+
+    # 4. Loop di Ascolto e Pulizia
+    streaming_pull_future = subscriber.subscribe(subscription_path, callback=callback)
+    print(f"In ascolto... (Ctrl+C per chiudere)")
+
+    with subscriber:
+        try:
+            # Mantiene lo script vivo
+            streaming_pull_future.result()
+        except KeyboardInterrupt:
+            print("\nChiusura richiesta dall'utente...")
+            streaming_pull_future.cancel()
+        finally:
+            # PULIZIA FINALE: Cancella la sottoscrizione
+            print("Eliminazione sottoscrizione temporanea...")
+            subscriber.delete_subscription(request={"subscription": subscription_path})
+            print("Fatto. Ciao!")
+    ```
+3. **In un terminale far partire il pub (va bene anche in locale).**
+4. **In un altro terminale fai partire il sub.**
 ---
 # 8. File `time_utils.py`
 ```python
