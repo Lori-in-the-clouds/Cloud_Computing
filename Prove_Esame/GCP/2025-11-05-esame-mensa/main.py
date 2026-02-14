@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, redirect
 from file_firestone import *
-from wtforms import DateField, EmailField, Form, StringField, IntegerField, SubmitField, validators
+from wtforms import DateField, EmailField, Form, RadioField, StringField, IntegerField, SubmitField, validators
 from time_utils import *
 
 #Creiamo applicazione web
@@ -13,75 +13,129 @@ class Struct:
         self.__dict__.update(entries)
 
 
-@app.route('/trend/<data>', methods=['GET'])         
-@app.route('/api/v1/trend/<data>', methods=['GET'])   
-def get_trend_api(data):
-    """
-    Questa funzione è SIA la 'Web Function' CHE l'API REST.
-    """
-    date_str = get_past_dates(7,exclude_today=True)
+def get_trend(data):
     l = db_firestone.get_all_elements("prenotazioni")
-    l_filtered = [elem for elem in l if elem['id'].split('_')[0] in date_str]
-
-    if len(l_filtered) == 0:
-        return {
-            "trend": 0
-        }, 200
+    days = []
+    for i in range(1,8):
+        days.append(from_date_to_string(from_string_to_date(data) - timedelta(days=i)))
+    #print(days)
     
-    sum_s = 0
+    l_filtered = [elem for elem in l if elem["id"].split("_")[0] in days]
+    print(l_filtered)
+    mean = 0
     for elem in l_filtered:
-        sum_s += elem['bimbi']
-    avg = sum_s / 7.0   
-    print(avg)
-    trend = ((sum([elem["bimbi"] for elem in l if elem['id'].split('_')[0] == data]) - avg) / avg) * 100
-
-    return {
-        "trend": trend
-    }, 200
-
-@app.route('/lista', methods=['GET']) 
-def riepilogo_pasti():
-
-    l = db_firestone.get_all_elements("prenotazioni")
-    days = get_past_dates(7)
+        mean += elem["bambini"]
     
-    asili_l = {
-    day: {
-        "nomi_asili": [], 
-        "totale_bambini": 0,        
-        "ev": False
-    } 
-    for day in days
-    }
+    mean /= 7.0
+    if mean != 0:
+        trend = ((sum([float(elem["bambini"]) for elem in l if elem["id"].split("_")[0] in data]) - mean) / mean) * 100.00
+        return trend
+    else: 
+        return 0
 
-    for elem in l:
-        if elem['id'].split('_')[0] in days:
-            day = elem['id'].split('_')[0]
-            asili_l[day]["nomi_asili"].append({
-                "asilo": elem['id'].split('_')[1],
-                "bimbi": elem['bimbi']
-            })
-            asili_l[day]["totale_bambini"] += elem['bimbi']
-            if elem['id'].split('_')[0] == datetime.now().strftime("%d-%m-%Y"):
-               asili_l[day]["ev"] = True
-                          
-    print(asili_l)
-    return render_template("riepilogo.html", asili_l=asili_l)
-
-
-@app.route('/lista/<data>', methods=['GET']) 
-def dettaglio(data):
+@app.route('/list', methods=['GET',"POST"]) 
+def lista():
     l = db_firestone.get_all_elements("prenotazioni")
-    l_filtered = [elem for elem in l if elem['id'].split('_')[0] == data]
+
+    days = []
+    for i in range (0,7):
+        days.append(from_date_to_string(datetime.now() - timedelta(days=i)))
+
+    print(days)
+
+    #l_filtered = [elem for elem in l if elem["id"].split("_")[0] in days]
+
+    res = []
+    
+    for day in days:
+        totale = sum([elem["bambini"] for elem in l if elem["id"].split("_")[0] in day])
+        if totale > 0:
+            if day == from_date_to_string(datetime.now()):
+                res.append({"data":day,"bambini": totale,"mark":True})
+            else:
+                res.append({"data":day,"bambini": totale,"mark":False})
+
+    l_f_sorted = ordina_lista_di_dizionari_per_data(res,"data","%d-%m-%Y",True)
+
+    return render_template("list.html", lista=l_f_sorted)
+
+@app.route('/dettagli/<data>', methods=['GET',"POST"]) 
+def dettagli(data):
+
+    l = db_firestone.get_all_elements("prenotazioni")
+    l_filtered = [elem for elem in l if elem["id"].split("_")[0] == data]
     l_filtered = [
         {
-            "asilo": item["id"].split("_", 1)[1], 
-            "bambini": item["bimbi"]
-        } 
-        for item in l_filtered 
+            "asilo": elem["id"].split("_")[1],
+            "data": elem["id"].split("_")[0],
+            "bambini": elem["bambini"]
+        } for elem in l_filtered
     ]
-    return render_template("dettagli.html", asili=l_filtered, data=data)
+
+    totale = 0
+    for elem in l_filtered:
+        totale+= elem["bambini"]
+
+    return render_template("dettagli.html", lista=l_filtered,totale=totale)
+
+
+#FUNCTION
+def update_db(data,context): 
+
+    document_name = context.resource.split("/")[-1]
+
+    new_value = data['value'] if len(data["value"]) != 0 else None
+    old_value = data['oldValue'] if len(data["oldValue"]) !=0 else None
+
+    valore = new_value["name"].split("/")[-1]
+    data = valore.split("_")[0]
+    asilo = valore.split("_")[1]
+    
+    if new_value and not old_value: # document added
+        
+        elem = db_firestone.get_element("prenotazioni",f"{data}_{asilo}")
+        elem_riep = db_firestone.get_element("riepiloghi",data)
+
+        if elem_riep is None:
+            db_firestone.add_element("riepiloghi",data,{
+                "totale_pasti": elem["bambini"],
+                "asili": [{"nome_asilo": asilo, "trend": get_trend(data)}]
+            })
+        else:
+            db_firestone.add_element("riepiloghi",data,{
+                "totale_pasti": elem_riep["totale_pasti"] + elem["bambini"],
+                "asili": elem_riep["asili"] + [{"nome_asilo": asilo, "trend": get_trend(data)}]
+            })
+
+    elif not new_value and old_value: # document removed
+        pass
+    else: # document updated
+        
+        elem = db_firestone.get_element("prenotazioni",f"{data}_{asilo}")
+        elem_riep = db_firestone.get_element("riepiloghi",data)
+        if elem_riep is None:
+            db_firestone.add_element("riepiloghi",data,{
+                "totale_pasti": elem["bambini"],
+                "asili": [{"nome_asilo": asilo, "trend": get_trend(data)}]
+            })
+        else:
+            db_firestone.add_element("riepiloghi",data,{
+                "totale_pasti": elem_riep["totale_pasti"] + elem["bambini"],
+                "asili": elem_riep["asili"] + [{"nome_asilo": asilo, "trend": get_trend(data)}]
+            })
+
+
+def HTTP_FUNCTION(request):
+    if request.method == 'GET':
+        path = request.path
+        if path.split('/')[-2] != "trend":
+            return None, 400
+        
+        data = path.split('/')[-1]
+        return {"trend":get_trend(data)},200
 
 #Per fare debug in locale
 if __name__=='__main__':
     app.run(host="localhost", port=8080, debug=True)
+
+    #update_db(fake_event)

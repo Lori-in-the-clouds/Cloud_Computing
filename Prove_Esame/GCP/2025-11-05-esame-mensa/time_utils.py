@@ -1,3 +1,4 @@
+
 from datetime import datetime, time, timedelta
 from dateutil.relativedelta import relativedelta
 import calendar
@@ -6,39 +7,30 @@ import calendar
 # SEZIONE 1: CONVERSIONI BASE (Stringa <-> Oggetto)
 # =============================================================================
 
-def from_date_to_string(d: datetime) -> str:
-    """Converte oggetto datetime in stringa 'gg-mm-YYYY'"""
-    return d.strftime("%d-%m-%Y")
-
-def from_string_to_date(d_str: str) -> datetime | None:
-    """Converte stringa 'gg-mm-YYYY' in oggetto datetime"""
+def from_string_to_date(d_str: str, pattern = "%d-%m-%Y") -> datetime:
+    """
+    Converte una stringa in un oggetto datetime o time basandosi sul pattern.
+    Esempi pattern: "%d-%m-%Y", "%H:%M", "%Y-%m-%d %H:%M:%S"
+    """
+    if not d_str:
+        return None
     try:
-        return datetime.strptime(d_str, "%d-%m-%Y")
+        dt = datetime.strptime(d_str, pattern)
+        # Se il pattern contiene solo ore e minuti, restituiamo un oggetto .time()
+        if "%H" in pattern and "%d" not in pattern:
+            return dt.time()
+        return dt
     except (ValueError, TypeError):
         return None
 
-def from_time_to_string(t: time) -> str:
-    """Converte oggetto time in stringa 'HH:MM'"""
-    return t.strftime("%H:%M")
-
-def from_string_to_time(t_str: str) -> time | None:
-    """Converte stringa 'HH:MM' in oggetto time"""
-    try:
-        return datetime.strptime(t_str, "%H:%M").time()
-    except (ValueError, TypeError):
+def from_date_to_string(d: datetime, pattern = "%d-%m-%Y") -> str:
+    """
+    Converte un oggetto (datetime o time) in stringa basandosi sul pattern.
+    """
+    if d is None:
         return None
+    return d.strftime(pattern)
 
-def from_month_to_string(m: datetime) -> str:
-    """Converte oggetto datetime in stringa 'MM-YYYY'"""
-    return m.strftime("%m-%Y")
-
-def from_string_to_month(m_str: str) -> datetime | None:
-    """Converte stringa 'MM-YYYY' in oggetto datetime"""
-    try:
-        return datetime.strptime(m_str, "%m-%Y")
-    except (ValueError, TypeError):
-        return None
-    
 # =============================================================================
 # SEZIONE 2: LISTE E RANGE DI DATE
 # =============================================================================
@@ -103,7 +95,7 @@ def somma_ore_minuti(orario_str: str, ore: int = 0, minuti: int = 0) -> str:
     nuovo = t_obj + timedelta(hours=ore, minutes=minuti)
     return nuovo.strftime("%H:%M")
 
-def calculate_end_time(start_time_str: str, duration_minutes: int) -> str | None:
+def calculate_end_time(start_time_str: str, duration_minutes: int) -> str:
     """
     Calcola l'orario di fine.
     Gestisce automaticamente il cambio di giornata (es. 23:00 + 120min -> 01:00).
@@ -133,6 +125,18 @@ def overlap(t1_str: str, durata_1: int, t2_str: str, durata_2: int) -> bool:
     # Logica di sovrapposizione standard
     return max(start1, start2) < min(end1, end2)
 
+def aggiungi_un_mese(data_input) -> str:
+    # Se la data è una stringa, la convertiamo prima in oggetto datetime
+    if isinstance(data_input, str):
+        data_obj = datetime.strptime(data_input, "%Y-%m-%d")
+    else:
+        data_obj = data_input
+
+    # Aggiunge esattamente un mese solare
+    nuova_data = data_obj + relativedelta(months=1)
+    
+    return from_date_to_string(nuova_data)
+
 # =============================================================================
 # SEZIONE 4: ORDINAMENTO
 # =============================================================================
@@ -161,6 +165,16 @@ def ordina_ore_minuti(lista_orari: list[str], crescente: bool = True) -> list[st
         reverse=not crescente
     )
 
+def ordina_lista_di_dizionari_per_data(l, campo_con_data, formato_data="%Y-%m-%d %H:%M:%S",reverse=False):
+    """Ordina una lista di dizionari in base a una data (stringa o oggetto datetime)."""
+    # Usiamo sorted con una chiave (key) personalizzata
+    lista_sorted = sorted(
+        l, 
+        key=lambda x: datetime.strptime(x[campo_con_data], formato_data),
+        reverse=reverse
+    )
+    return lista_sorted
+
 # =============================================================================
 # SEZIONE 5: UTILITY VARIE E FORMATTAZIONE
 # =============================================================================
@@ -171,6 +185,33 @@ def giorno_della_settimana_it(data_str: str) -> str:
     if not data: return ""
     giorni = ["Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato", "Domenica"]
     return giorni[data.weekday()]
+
+def mese_it_month(month_str: str) -> str:
+    """Restituisce il nome del mese in italiano (es. 'Gennaio')"""
+    data = from_string_to_date(month_str)
+    if not data:
+        return ""
+
+    mesi = [
+        "Gennaio", "Febbraio", "Marzo", "Aprile",
+        "Maggio", "Giugno", "Luglio", "Agosto",
+        "Settembre", "Ottobre", "Novembre", "Dicembre"
+    ]
+    return mesi[data.month - 1]
+
+def mese_it_date(date_str: str) -> str:
+    """Restituisce il nome del mese in italiano (es. 'Gennaio')"""
+    data = from_string_to_date(date_str)
+    if not data:
+        return ""
+
+    mesi = [
+        "Gennaio", "Febbraio", "Marzo", "Aprile",
+        "Maggio", "Giugno", "Luglio", "Agosto",
+        "Settembre", "Ottobre", "Novembre", "Dicembre"
+    ]
+
+    return mesi[data.month - 1]
 
 def da_ddmmyyyy_a_yyyymmdd(data_str: str) -> str:
     """Converte '10-05-2025' -> '2025-05-10' (Utile per input HTML date)"""

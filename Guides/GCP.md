@@ -413,9 +413,9 @@ L'obiettivo è quello di creare un'interfaccia web per visualizzare i dati all'i
             <tbody>
                 {% for c in LIST_PARAM %}
                     <tr>
-                    <td>c.name</td>
-                    <td>c.age</td>
-                    <td>c.city</td>
+                    <td>{{c.name}}</td>
+                    <td>{{c.age}}</td>
+                    <td>{{c.city}}</td>
                     </tr>
                 {% endfor %}
             </tbody>

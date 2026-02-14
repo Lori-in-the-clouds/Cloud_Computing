@@ -1,10 +1,6 @@
 [
-    {"id": "05-11-2025_asilo-arcobaleno", "bimbi": 50},
-    {"id": "15-01-2026_casetta", "bimbi": 30},
-    {"id": "24-01-2026_girasole", "bimbi": 40},
-    {"id": "25-01-2026_albero", "bimbi": 40},
-    {"id": "24-01-2026_girasole", "bimbi": 24},
-    {"id": "24-01-2026_casetta", "bimbi": 70},
-    {"id": "28-01-2026_casetta", "bimbi": 70}
-    
+    {"id": "14-02-2026_asilo-arcobaleno", "bambini": 200},
+    {"id": "13-02-2026_asilo-tronco", "bambini": 100},
+    {"id": "13-02-2026_asilo-arcobaleno", "bambini": 400},
+    {"id": "10-02-2026_asilo-cicala", "bambini": 50}
 ]

@@ -56,6 +56,16 @@ class FirestoreManager(object):
         for doc in docs:
             doc.reference.delete()
 
+    def delete_element(self, collection_name, document_id):
+        """Elimina un singolo documento dalla collezione specificata. Ritorna True se l'operazione viene inviata correttamente"""
+        try:
+            doc_ref = self.db.collection(collection_name).document(str(document_id))
+            doc_ref.delete()
+            return True
+        except Exception as e:
+            print(f"Errore durante l'eliminazione del documento {document_id}: {e}")
+            return False
+
     # --- POPOLAMENTO INIZIALE ---
     def populate_from_json(self, filename, collection_target):
         try:
@@ -72,10 +82,6 @@ class FirestoreManager(object):
 
 if __name__ == '__main__':
     db = FirestoreManager()
-    db.clean_collection("prenotazioni")
-    db.populate_from_json('db.json',"prenotazioni")
-    #print(db.get_all_elements("prenotazioni"))
-    #db.add_element("prenotazioni", "05-11-2025_asilo4", {"bimbi": 30})
-    db.add_element("prenotazioni", "27-01-2026_asilo1", {"bimbi": 20})
-
+    db.populate_from_json('db.json',collection_target="prenotazioni")
     #db.clean_db()
+    
