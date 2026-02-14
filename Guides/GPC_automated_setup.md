@@ -79,7 +79,7 @@
     CONTENT_TIME_UTILS = '''from datetime import datetime, time, timedelta
     from dateutil.relativedelta import relativedelta
     import calendar
-
+    
     # =============================================================================
     # SEZIONE 1: CONVERSIONI BASE (Stringa <-> Oggetto)
     # =============================================================================
@@ -376,8 +376,7 @@
     '''
 
     # 8. main.py (Entry point + Web App)
-    CONTENT_MAIN = '''
-    from flask import Flask, render_template, request, redirect
+    CONTENT_MAIN = '''from flask import Flask, render_template, request, redirect
     from file_firestone import *
     from wtforms import DateField, EmailField, Form, RadioField, StringField, IntegerField, SubmitField, validators
     from time_utils import *
