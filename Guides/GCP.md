@@ -373,9 +373,9 @@ L'obiettivo è quello di creare un'interfaccia web per visualizzare i dati all'i
             <thead>
                 <!-- Nomi delle colonne -->
                 <tr>
-                <th>Nome</th>
-                <th>Età</th>
-                <th>Città</th>
+                    <th>Nome</th>
+                    <th>Età</th>
+                    <th>Città</th>
                 </tr>
                 
             </thead>
@@ -383,15 +383,15 @@ L'obiettivo è quello di creare un'interfaccia web per visualizzare i dati all'i
             <tbody>
                 <!-- Prima riga -->
                 <tr>
-                <td>Lorenzo</td>
-                <td>25</td>
-                <td>Roma</td>
+                    <td>Lorenzo</td>
+                    <td>25</td>
+                    <td>Roma</td>
                 </tr>
                 <!-- Seconda riga -->
                 <tr>
-                <td>Marco</td>
-                <td>30</td>
-                <td>Milano</td>
+                    <td>Marco</td>
+                    <td>30</td>
+                    <td>Milano</td>
                 </tr>
             </tbody>
         </table>
@@ -403,9 +403,9 @@ L'obiettivo è quello di creare un'interfaccia web per visualizzare i dati all'i
             <thead>
                 <!-- Nomi delle colonne -->
                 <tr>
-                <th>Nome</th>
-                <th>Età</th>
-                <th>Città</th>
+                    <th>Nome</th>
+                    <th>Età</th>
+                    <th>Città</th>
                 </tr>
                 
             </thead>
@@ -413,9 +413,9 @@ L'obiettivo è quello di creare un'interfaccia web per visualizzare i dati all'i
             <tbody>
                 {% for c in LIST_PARAM %}
                     <tr>
-                    <td>{{c.name}}</td>
-                    <td>{{c.age}}</td>
-                    <td>{{c.city}}</td>
+                        <td>{{c.name}}</td>
+                        <td>{{c.age}}</td>
+                        <td>{{c.city}}</td>
                     </tr>
                 {% endfor %}
             </tbody>
@@ -986,7 +986,7 @@ import calendar
 # SEZIONE 1: CONVERSIONI BASE (Stringa <-> Oggetto)
 # =============================================================================
 
-def from_string_do_date(d_str: str, pattern = "%d-%m-%Y") -> datetime:
+def from_string_to_date(d_str: str, pattern = "%d-%m-%Y") -> datetime:
     """
     Converte una stringa in un oggetto datetime o time basandosi sul pattern.
     Esempi pattern: "%d-%m-%Y", "%H:%M", "%Y-%m-%d %H:%M:%S"
@@ -1104,9 +1104,6 @@ def overlap(t1_str: str, durata_1: int, t2_str: str, durata_2: int) -> bool:
     # Logica di sovrapposizione standard
     return max(start1, start2) < min(end1, end2)
 
-from datetime import datetime
-from dateutil.relativedelta import relativedelta
-
 def aggiungi_un_mese(data_input) -> str:
     # Se la data è una stringa, la convertiamo prima in oggetto datetime
     if isinstance(data_input, str):
@@ -1170,7 +1167,7 @@ def giorno_della_settimana_it(data_str: str) -> str:
 
 def mese_it_month(month_str: str) -> str:
     """Restituisce il nome del mese in italiano (es. 'Gennaio')"""
-    data = from_string_to_month(month_str)
+    data = from_string_to_date(month_str,"%m-%Y")
     if not data:
         return ""
 
