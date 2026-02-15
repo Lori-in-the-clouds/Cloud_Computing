@@ -98,6 +98,7 @@ Questo file viene utilizzato per definire la struttura della rete. I componenti 
 * [Delay](components_omnet/delay.md): è un tempo fisso che viene applicato ad ogni task per simulare delle operazioni. 
 * [Sink](components_omnet/sink.md): corrisponde all'output della network e viene utilizzato per calcolare alcune statistiche di performance.
 * [Classifier](components_omnet/classifier.md): modulo di instradamento utilizzato per smistare i pacchetti (job) in arrivo verso diverse uscite sulla base di attributi specifici del pacchetto stesso.
+* [Clone](components_omnet/clone.md): utilizzato per la duplicazione dei messaggi (job) all'interno della rete.
 
 Il **`file.ned`**:
 ```ned
@@ -106,6 +107,7 @@ import org.omnetpp.queueing.Router;
 import org.omnetpp.queueing.Queue;
 import org.omnetpp.queueing.Sink;
 import org.omnetpp.queueing.Delay;
+import org.omnetpp.queueing.Clone;
 
 network esame {
 
@@ -145,7 +147,7 @@ network esame {
         //router -> in[]; out[];
         //sink -> in[];
         //delay -> in[], out;
-
+        //clone -> in[], out[];
 }
 ```
 # 2. Creazione file `ini.mako`:

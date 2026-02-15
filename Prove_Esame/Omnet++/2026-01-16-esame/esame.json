@@ -1,0 +1,40 @@
+{
+    "scenario_schema": {
+        "label": {"pattern": "**.label", "type": "string"},
+        "p": {"pattern": "**.p", "type": "real"}
+    },
+    "metrics": {
+        "LifeTime_1": {"module": "**.sink_1", "scalar_name": "lifeTime:mean" ,"aggr": ["none"]},
+        "LifeTime_2": {"module": "**.sink_2", "scalar_name": "lifeTime:mean" ,"aggr": ["none"]},
+        "LifeTime_g": {"module": "**.sink_g", "scalar_name": "lifeTime:mean" ,"aggr": ["none"]}
+
+    },
+
+    "analyses": {
+       "Fase1": {
+            "outfile": "results/fase_1.data",
+            "scenarios": {
+                "fixed": {"label": "F1"},
+                "range": []
+            },
+            "metrics": [
+                        {"metric": "LifeTime_1", "aggr": "none"},
+                        {"metric": "LifeTime_2", "aggr": "none"},
+                        {"metric": "LifeTime_g", "aggr": "none"}
+                    ]
+        },    
+        
+        "Fase2": {
+            "outfile": "results/fase_2.data",
+            "scenarios": {
+                "fixed": {"label": "F2"},
+                "range": ["p"]
+            },
+            "metrics": [
+                        {"metric": "LifeTime_1", "aggr": "none"},
+                        {"metric": "LifeTime_2", "aggr": "none"},
+                        {"metric": "LifeTime_g", "aggr": "none"}
+                    ]
+        } 
+    }
+}

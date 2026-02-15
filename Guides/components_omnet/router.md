@@ -19,8 +19,8 @@ import org.omnetpp.queueing.Router;
 
 network MM1 {
     parameters:
-        r.routingAlgorithm="random"
-        r.randomGateIndex=(uniform(0,10.0)<=6.0?0:1)
+        r.routingAlgorithm="random";
+        r.randomGateIndex=default(uniform(0,1.0)<=0.315?0:1);
 
     connections:
         # router ha un array vuoto di porte di input, input[]
